@@ -17,6 +17,7 @@ export function StopModal({ open, onClose }: StopModalProps) {
   const [constat, setConstat] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -38,6 +39,7 @@ export function StopModal({ open, onClose }: StopModalProps) {
     if (!chantierId || !constat.trim()) return;
 
     setSending(true);
+    setError(null);
     try {
       const res = await fetch("/api/ecarts/stop-danger", {
         method: "POST",
@@ -56,7 +58,12 @@ export function StopModal({ open, onClose }: StopModalProps) {
           setChantierId("");
           onClose();
         }, 2000);
+      } else {
+        const data = await res.json();
+        setError(data.error || "Erreur lors de l'envoi");
       }
+    } catch {
+      setError("Erreur réseau");
     } finally {
       setSending(false);
     }
@@ -81,6 +88,11 @@ export function StopModal({ open, onClose }: StopModalProps) {
   return (
     <Modal open={open} onClose={onClose} title="⚠️ STOP EN CAS DE DANGER">
       <form onSubmit={handleSubmit} className="space-y-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-red-700 text-sm">
+            {error}
+          </div>
+        )}
         <div>
           <label
             htmlFor="stop-chantier"
