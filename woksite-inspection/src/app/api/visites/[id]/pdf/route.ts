@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import { renderToBuffer } from "@react-pdf/renderer";
 import { RapportVisite } from "@/components/pdf/rapport-visite";
 import { NextResponse } from "next/server";
@@ -9,7 +9,7 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Charger la visite
   const { data: visite } = await supabase

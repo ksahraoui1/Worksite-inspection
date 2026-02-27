@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/server";
 import {
   isValidTransition,
   getAvailableTransitions,
@@ -22,7 +22,7 @@ export async function PATCH(
     );
   }
 
-  const supabase = await createClient();
+  const supabase = createAdminClient();
 
   // Charger l'écart actuel
   const { data: ecart } = await supabase
