@@ -1,17 +1,19 @@
 <!--
   === Sync Impact Report ===
-  Version change: (new) → 1.0.0
-  Modified principles: N/A (initial creation)
-  Added sections:
-    - Core Principles (5 principles)
-    - Contraintes Reglementaires et Modele de Donnees
-    - Workflow de Developpement
-    - Governance
+  Version change: 1.0.0 → 1.1.0
+  Modified principles:
+    - II. Mobile-First et Usage Terrain: "Dictee vocale" et "gestes de swipe"
+      reclasses de DOIT vers DEVRAIT (ameliorations post-MVP)
+    - III. Tracabilite Chronologique Complete: exportabilite precisee —
+      le rapport PDF par visite satisfait l'exigence pour le MVP
+  Added sections: N/A
   Removed sections: N/A
+  Stack changes:
+    - Retrait de "react-signature-canvas" et "react-email" (non utilises)
   Templates requiring updates:
-    - .specify/templates/plan-template.md — ✅ compatible (Constitution Check section exists)
-    - .specify/templates/spec-template.md — ✅ compatible (User Stories + Requirements sections exist)
-    - .specify/templates/tasks-template.md — ✅ compatible (Phase-based structure aligns with construction phases)
+    - .specify/templates/plan-template.md — ✅ compatible
+    - .specify/templates/spec-template.md — ✅ compatible
+    - .specify/templates/tasks-template.md — ✅ compatible
   Follow-up TODOs: None
 -->
 
@@ -48,8 +50,12 @@ sur tablette et smartphone directement sur le chantier :
 - Mode hors-ligne OBLIGATOIRE via PWA (Service Worker + IndexedDB)
   pour les zones de chantier sans couverture reseau
 - Interface tactile optimisee : boutons min 44px, zones de tap
-  espacees, gestes de swipe pour la navigation entre points de controle
+  espacees
 - Capture photo integree directement depuis l'interface d'inspection
+
+Ameliorations post-MVP (DEVRAIT) :
+
+- Gestes de swipe pour la navigation entre points de controle
 - Dictee vocale pour la saisie des constats sur le terrain
 
 ### III. Tracabilite Chronologique Complete
@@ -63,7 +69,11 @@ a son contexte (chantier, visite, phase, inspecteur) :
   un soft-delete pour garantir l'integrite de l'audit trail
 - Generation de rapports PDF avec horodatage, photos des ecarts,
   references legales et delais de mise en conformite
-- Les donnees DOIVENT etre exportables pour les autorites de controle
+- Les donnees DOIVENT etre exportables pour les autorites de controle.
+  Pour le MVP, la generation de rapports PDF par visite (incluant
+  constats, photos, references legales et delais) satisfait cette
+  exigence. Un export general (CSV/JSON) DEVRAIT etre ajoute
+  ulterieurement
 
 ### IV. Securite Immediate — STOP Danger
 
@@ -122,7 +132,7 @@ Stack technologique validee :
 - **Backend/BDD** : Supabase (PostgreSQL), Supabase JS v2
 - **PWA** : Serwist (Service Worker), Dexie.js 4.x (IndexedDB)
 - **PDF** : @react-pdf/renderer v4
-- **Outils** : react-signature-canvas, react-email, Resend
+- **Notifications** : Resend
 
 ## Workflow de Developpement
 
@@ -170,4 +180,4 @@ d'implementation DOIT etre verifiee contre ces principes.
 - **Guidance** : Consulter `CLAUDE.md` pour les directives de
   developpement runtime specifiques au projet
 
-**Version**: 1.0.0 | **Ratified**: 2026-02-26 | **Last Amended**: 2026-02-26
+**Version**: 1.1.0 | **Ratified**: 2026-02-26 | **Last Amended**: 2026-02-27
