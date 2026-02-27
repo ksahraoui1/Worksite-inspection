@@ -42,6 +42,7 @@ export async function POST(request: Request) {
     .from("ecart")
     .insert({
       visite_id: null, // STOP Danger déclenché hors contexte de visite
+      chantier_id,
       checklist_item_id: checklist_item_id ?? null,
       constat,
       photo_url: photo_url ?? null,

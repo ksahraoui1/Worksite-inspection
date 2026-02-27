@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { AlertesBanner } from "@/components/dashboard/alertes-banner";
 import { ChantierCard } from "@/components/dashboard/chantier-card";
+import { StopDangerList } from "@/components/dashboard/stop-danger-list";
 import { Button } from "@/components/ui/button";
 import type { ChantierWithEcartsEnRetard } from "@/types/database";
 
@@ -17,6 +18,25 @@ export default async function DashboardPage() {
 
   // Charger les écarts en retard par chantier
   const { data: ecartsEnRetard } = await supabase.rpc("get_ecarts_en_retard");
+
+  // Charger les STOP Danger actifs (non résolus)
+  const { data: stopDangerEcarts } = await supabase
+    .from("ecart")
+    .select("id, constat, created_at, chantier_id, chantier:chantier_id(nom)")
+    .eq("statut", "stop_danger")
+    .is("deleted_at", null)
+    .order("created_at", { ascending: false });
+
+  const stopDangerItems = (stopDangerEcarts ?? []).map((e: Record<string, unknown>) => {
+    const chantier = e.chantier as Record<string, unknown> | null;
+    return {
+      id: e.id as string,
+      constat: e.constat as string,
+      created_at: e.created_at as string,
+      chantier_nom: (chantier?.nom as string) ?? null,
+      chantier_id: (e.chantier_id as string) ?? null,
+    };
+  });
 
   // Fusionner les données
   const ecartsMap = new Map<string, number>();
@@ -47,6 +67,7 @@ export default async function DashboardPage() {
         </a>
       </div>
 
+      <StopDangerList ecarts={stopDangerItems} />
       <AlertesBanner totalEcartsEnRetard={totalEcartsEnRetard} />
 
       {chantiersWithEcarts.length === 0 ? (

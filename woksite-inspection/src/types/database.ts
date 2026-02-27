@@ -85,6 +85,7 @@ export interface ReponseVisite {
 export interface Ecart {
   id: string;
   visite_id: string | null;
+  chantier_id: string | null;
   checklist_item_id: string | null;
   entreprise_id: string | null;
   constat: string;
