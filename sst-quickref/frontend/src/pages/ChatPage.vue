@@ -143,7 +143,7 @@ function goHome() {
     <!-- Main content -->
     <div class="flex-1 flex overflow-hidden">
       <!-- Chat panel -->
-      <div class="flex-1 flex flex-col p-4 pb-14 min-w-0">
+      <div class="flex-1 flex flex-col p-0 md:p-4 pb-14 min-w-0">
         <ChatWindow
           :messages="messages"
           :loading="loading"

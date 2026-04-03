@@ -44,15 +44,15 @@ function goToChat() {
     </header>
 
     <!-- Hero -->
-    <section class="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-700 text-white py-16 md:py-24">
+    <section class="bg-gradient-to-b from-gray-900 via-gray-800 to-gray-700 text-white py-8 md:py-24">
       <div class="max-w-4xl mx-auto px-4 text-center">
-        <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">
+        <h1 class="text-3xl md:text-5xl font-extrabold tracking-tight mb-2 md:mb-4">
           SST-QuickRef
         </h1>
-        <p class="text-xl md:text-2xl font-light text-teal-300 mb-3">
+        <p class="text-lg md:text-2xl font-light text-teal-300 mb-2 md:mb-3">
           Assistant IA Réglementaire pour la Santé et Sécurité au Travail
         </p>
-        <p class="text-base text-gray-300 max-w-2xl mx-auto leading-relaxed">
+        <p class="text-sm md:text-base text-gray-300 max-w-2xl mx-auto leading-relaxed hidden md:block">
           Interrogez instantanément la législation suisse SST. Obtenez des réponses sourcées avec les articles de loi correspondants, directement depuis les textes officiels.
         </p>
       </div>
@@ -60,14 +60,14 @@ function goToChat() {
 
     <!-- Demo chat section -->
     <section class="py-12 md:py-16 bg-gray-50">
-      <div class="max-w-3xl mx-auto px-4">
+      <div class="max-w-4xl mx-auto px-2 md:px-4">
         <h2 class="text-2xl font-bold text-gray-900 text-center mb-2">
           Essayez gratuitement
         </h2>
-        <p class="text-sm text-gray-500 text-center mb-8">
+        <p class="text-sm text-gray-500 text-center mb-4 md:mb-8">
           Posez une question pour voir comment fonctionne l'assistant
         </p>
-        <div class="h-[480px]">
+        <div class="h-[60vh] md:h-[520px]">
           <ChatWindow
             :messages="messages"
             :loading="loading"

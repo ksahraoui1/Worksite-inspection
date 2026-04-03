@@ -58,7 +58,7 @@ const renderedContent = computed(() => {
     class="flex w-full mb-4"
     :class="isUser ? 'justify-end' : 'justify-start'"
   >
-    <div class="max-w-[80%] lg:max-w-[70%]">
+    <div :class="isUser ? 'max-w-[85%] md:max-w-[70%]' : 'max-w-full w-full'">
       <!-- Bubble -->
       <div
         class="rounded-2xl px-4 py-3 text-sm leading-relaxed"

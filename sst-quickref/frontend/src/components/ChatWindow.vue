@@ -80,7 +80,7 @@ onMounted(() => scrollToBottom())
 </script>
 
 <template>
-  <div class="flex flex-col h-full bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+  <div class="flex flex-col h-full bg-white overflow-hidden md:rounded-2xl md:shadow-lg md:border md:border-gray-200">
     <!-- Messages area -->
     <div
       ref="messagesContainer"
