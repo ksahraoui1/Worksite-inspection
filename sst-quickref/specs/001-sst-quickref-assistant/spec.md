@@ -2,7 +2,7 @@
 
 **Feature Branch**: `001-sst-quickref-assistant`  
 **Created**: 2026-04-02  
-**Status**: Draft  
+**Status**: Implemented — Production (https://quickref.securionis.com)  
 **Input**: Rapport de développement SST-QuickRef (15 pages, Version 1.0)
 
 ## Clarifications
@@ -110,7 +110,7 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 - **FR-001**: Le système DOIT permettre à un utilisateur de poser une question en français sur la réglementation SST suisse et recevoir une réponse sourcée.
 - **FR-002**: Chaque réponse DOIT citer la loi source, l'article exact, la date de version du texte et un lien vers le document officiel.
 - **FR-003**: Le système DOIT afficher un disclaimer légal sur chaque réponse indiquant qu'il ne s'agit pas d'un avis juridique.
-- **FR-004**: Le système DOIT couvrir l'intégralité des textes réglementaires SST Priorité 1 : OTConst (complet), CFST 6508, OPA Art. 62.
+- **FR-004**: Le système DOIT couvrir l'intégralité des textes réglementaires SST Priorité 1 : OTConst, CFST 6508, OPA, OLT1, OLT2, OLT3, OLT4.
 - **FR-005**: Le système DOIT refuser de répondre lorsque le score de pertinence des chunks retournés est inférieur au seuil défini, et afficher "Aucun texte réglementaire trouvé" avec suggestion de reformuler.
 - **FR-006**: Le système DOIT supporter une requête contextuelle depuis Securionis Inspect avec transmission automatique du thème SST actif.
 - **FR-007**: Le système DOIT exposer un point d'entrée de requête (endpoint POST /api/quickref/query) acceptant une question, un contexte optionnel (thème, catégorie) et une langue, authentifié par JWT Supabase.
@@ -141,7 +141,7 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 
 - **SC-001**: Les utilisateurs obtiennent une réponse à leur question réglementaire en moins de 3 secondes.
 - **SC-002**: Plus de 95 % des réponses citent correctement la référence législative vérifiable (article, version, source).
-- **SC-003**: 100 % des textes SST suisses Priorité 1 (OTConst, CFST 6508, OPA) sont couverts et consultables.
+- **SC-003**: 100 % des textes SST suisses Priorité 1 (OTConst, CFST 6508, OPA, OLT1, OLT2, OLT3, OLT4) sont couverts et consultables — **ATTEINT : 7 sources, 971 chunks, 198 pages**.
 - **SC-004**: Les inspecteurs de terrain valident la pertinence des réponses sur un jeu de 50 questions de référence avec un taux de satisfaction supérieur à 80 %.
 - **SC-005**: Le système supporte 1000 requêtes par mois sans dégradation de performance perceptible.
 - **SC-006**: Le taux d'adoption atteint l'intégration active dans Securionis Inspect d'ici T3 2025.
@@ -160,3 +160,21 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 - Les textes réglementaires Priorité 2 (SECO, SUVA Fiches-info) et Priorité 3 (SIA 118, nLPD, AEAI) sont hors périmètre initial et seront ingérés dans les phases ultérieures.
 - Le périmètre couvre les Phases 0, 1 et 2 du rapport de développement. La Phase 3 (multi-langue, export PDF, tableau de bord admin) reste hors périmètre.
 - Les métriques d'observabilité (temps de réponse, taux de citations, volume, erreurs) sont collectées en continu pour piloter la qualité du service.
+
+## Implementation Status (2026-04-03)
+
+### Deployed
+- **Production URL** : https://quickref.securionis.com (VPS Hostinger, Docker + Nginx, SSL Let's Encrypt)
+- **7 sources réglementaires** : OTConst (160 chunks), CFST 6508 (44), OPA (207), OLT1 (252), OLT2 (188), OLT3 (48), OLT4 (72) — **971 chunks total**
+- **Pipeline RAG** : OpenAI text-embedding-3-small → pgvector (Supabase) → Claude Sonnet → citations sourcées
+- **Frontend** : Vue 3 + Vite + Tailwind, landing page, chat responsive, sources cliquables
+- **Backend** : 2 Supabase Edge Functions (quickref-query, quickref-feedback), 5 migrations SQL
+- **Rate limiting** : 10 req/jour freemium, accès illimité via clé admin Pro
+- **Seuil de similarité** : 0.55 (calibré pour textes PDF réels)
+
+### Pending
+- Abonnement Stripe (Plan Pro CHF 29/mois)
+- Intégration bouton "Texte applicable" dans Securionis Inspect
+- Sources additionnelles : SUVA Fiches-info, SECO Instructions
+- Multi-langue (allemand)
+- Benchmark formel sur 50 questions de référence
