@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendRapport } from "@/lib/email/send-rapport";
+import { canAccessVisite, getUserRole } from "@/lib/utils/security";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getLimits } from "@/lib/stripe/limits";
 
 export async function POST(
   request: NextRequest,
@@ -18,6 +21,26 @@ export async function POST(
 
     if (!user) {
       return NextResponse.json({ error: "Non autorise" }, { status: 401 });
+    }
+
+    // Rate limit: 10 emails par heure
+    if (!checkRateLimit(`visite-email:${user.id}`, 10, 60 * 60 * 1000)) {
+      return NextResponse.json({ error: "Trop de requêtes. Réessayez plus tard." }, { status: 429 });
+    }
+
+    // Vérification d'autorisation
+    if (!(await canAccessVisite(supabase, user.id, visiteId))) {
+      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+    }
+
+    // Vérification limites plan
+    const role = await getUserRole(supabase, user.id);
+    const limits = getLimits(role ?? "invité");
+    if (!limits.canSendEmail) {
+      return NextResponse.json(
+        { error: "L'envoi de rapports par email est réservé aux abonnés. Passez à l'offre payante." },
+        { status: 403 }
+      );
     }
 
     // Load visite
@@ -61,11 +84,30 @@ export async function POST(
       );
     }
 
+    // Load inspecteur profile + entreprise
+    const { data: inspecteur } = await supabase
+      .from("profiles")
+      .select("nom, entreprise_id")
+      .eq("id", visite.inspecteur_id)
+      .single();
+
+    let entreprise = null;
+    if (inspecteur?.entreprise_id) {
+      const { data } = await supabase
+        .from("entreprises")
+        .select("nom, adresse, npa, ville, telephone, email")
+        .eq("id", inspecteur.entreprise_id)
+        .single();
+      entreprise = data;
+    }
+
     const sentTo = await sendRapport(
       visite.rapport_url,
       destinataires,
       chantier?.adresse ?? "Chantier",
-      visite.date_visite
+      visite.date_visite,
+      inspecteur?.nom,
+      entreprise
     );
 
     // Update visite
@@ -81,12 +123,7 @@ export async function POST(
   } catch (err) {
     console.error("Email send error:", err);
     return NextResponse.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Erreur lors de l'envoi de l'email",
-      },
+      { error: "Erreur lors de l'envoi de l'email" },
       { status: 500 }
     );
   }

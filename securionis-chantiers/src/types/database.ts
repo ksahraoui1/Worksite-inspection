@@ -14,7 +14,8 @@ export type Database = {
           id: string;
           nom: string;
           email: string;
-          role: "inspecteur" | "administrateur";
+          role: "invité" | "inspecteur" | "administrateur";
+          entreprise_id: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -22,7 +23,8 @@ export type Database = {
           id: string;
           nom: string;
           email: string;
-          role?: "inspecteur" | "administrateur";
+          role?: "invité" | "inspecteur" | "administrateur";
+          entreprise_id?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -30,7 +32,44 @@ export type Database = {
           id?: string;
           nom?: string;
           email?: string;
-          role?: "inspecteur" | "administrateur";
+          role?: "invité" | "inspecteur" | "administrateur";
+          entreprise_id?: string | null;
+          updated_at?: string;
+        };
+      };
+      entreprises: {
+        Row: {
+          id: string;
+          nom: string;
+          adresse: string | null;
+          npa: string | null;
+          ville: string | null;
+          telephone: string | null;
+          email: string | null;
+          logo_url: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          nom: string;
+          adresse?: string | null;
+          npa?: string | null;
+          ville?: string | null;
+          telephone?: string | null;
+          email?: string | null;
+          logo_url?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          nom?: string;
+          adresse?: string | null;
+          npa?: string | null;
+          ville?: string | null;
+          telephone?: string | null;
+          email?: string | null;
+          logo_url?: string | null;
           updated_at?: string;
         };
       };
@@ -55,7 +94,7 @@ export type Database = {
       categories: {
         Row: {
           id: string;
-          phase_id: string;
+          phase_id: string | null;
           libelle: string;
           is_custom: boolean;
           actif: boolean;
@@ -63,28 +102,51 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          phase_id: string;
+          phase_id?: string | null;
           libelle: string;
           is_custom?: boolean;
           actif?: boolean;
           created_at?: string;
         };
         Update: {
-          phase_id?: string;
+          phase_id?: string | null;
           libelle?: string;
           is_custom?: boolean;
+          actif?: boolean;
+        };
+      };
+      themes: {
+        Row: {
+          id: string;
+          categorie_id: string;
+          libelle: string;
+          actif: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          categorie_id: string;
+          libelle: string;
+          actif?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          categorie_id?: string;
+          libelle?: string;
           actif?: boolean;
         };
       };
       points_controle: {
         Row: {
           id: string;
-          phase_id: string;
-          categorie_id: string;
+          phase_id: string | null;
+          categorie_id: string | null;
+          theme_id: string | null;
           intitule: string;
           critere: string | null;
           base_legale: string | null;
           objet: string | null;
+          explications: string | null;
           is_custom: boolean;
           actif: boolean;
           created_by: string | null;
@@ -93,12 +155,14 @@ export type Database = {
         };
         Insert: {
           id?: string;
-          phase_id: string;
-          categorie_id: string;
+          phase_id?: string | null;
+          categorie_id?: string | null;
+          theme_id?: string | null;
           intitule: string;
           critere?: string | null;
           base_legale?: string | null;
           objet?: string | null;
+          explications?: string | null;
           is_custom?: boolean;
           actif?: boolean;
           created_by?: string | null;
@@ -106,20 +170,52 @@ export type Database = {
           updated_at?: string;
         };
         Update: {
-          phase_id?: string;
-          categorie_id?: string;
+          phase_id?: string | null;
+          categorie_id?: string | null;
+          theme_id?: string | null;
           intitule?: string;
           critere?: string | null;
           base_legale?: string | null;
           objet?: string | null;
+          explications?: string | null;
           is_custom?: boolean;
           actif?: boolean;
           updated_at?: string;
         };
       };
+      point_controle_documents: {
+        Row: {
+          id: string;
+          point_controle_id: string;
+          nom: string;
+          fichier_url: string;
+          fichier_nom: string;
+          fichier_taille: number | null;
+          ordre: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          point_controle_id: string;
+          nom: string;
+          fichier_url: string;
+          fichier_nom: string;
+          fichier_taille?: number | null;
+          ordre?: number;
+          created_at?: string;
+        };
+        Update: {
+          nom?: string;
+          fichier_url?: string;
+          fichier_nom?: string;
+          fichier_taille?: number | null;
+          ordre?: number;
+        };
+      };
       chantiers: {
         Row: {
           id: string;
+          nom: string | null;
           adresse: string;
           nature_travaux: string;
           ref_communale: string | null;
@@ -127,12 +223,15 @@ export type Database = {
           numero_parcelle: string | null;
           numero_eca: string | null;
           contact_nom: string | null;
+          archived: boolean;
+          archived_at: string | null;
           created_by: string;
           created_at: string;
           updated_at: string;
         };
         Insert: {
           id?: string;
+          nom?: string | null;
           adresse: string;
           nature_travaux: string;
           ref_communale?: string | null;
@@ -140,11 +239,14 @@ export type Database = {
           numero_parcelle?: string | null;
           numero_eca?: string | null;
           contact_nom?: string | null;
+          archived?: boolean;
+          archived_at?: string | null;
           created_by: string;
           created_at?: string;
           updated_at?: string;
         };
         Update: {
+          nom?: string | null;
           adresse?: string;
           nature_travaux?: string;
           ref_communale?: string | null;
@@ -152,6 +254,8 @@ export type Database = {
           numero_parcelle?: string | null;
           numero_eca?: string | null;
           contact_nom?: string | null;
+          archived?: boolean;
+          archived_at?: string | null;
           updated_at?: string;
         };
       };
@@ -188,6 +292,8 @@ export type Database = {
           statut: "brouillon" | "en_cours" | "terminee";
           rapport_url: string | null;
           email_envoye: boolean;
+          categorie_ids: string[] | null;
+          renseignements_par: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -200,6 +306,8 @@ export type Database = {
           statut?: "brouillon" | "en_cours" | "terminee";
           rapport_url?: string | null;
           email_envoye?: boolean;
+          categorie_ids?: string[] | null;
+          renseignements_par?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -209,6 +317,8 @@ export type Database = {
           statut?: "brouillon" | "en_cours" | "terminee";
           rapport_url?: string | null;
           email_envoye?: boolean;
+          categorie_ids?: string[] | null;
+          renseignements_par?: string | null;
           updated_at?: string;
         };
       };
@@ -287,6 +397,171 @@ export type Database = {
         Update: {
           chantier_id?: string;
           inspecteur_id?: string;
+        };
+      };
+      documents: {
+        Row: {
+          id: string;
+          chantier_id: string;
+          nom: string;
+          categorie: string;
+          description: string | null;
+          fichier_url: string;
+          fichier_nom: string;
+          fichier_taille: number | null;
+          version: number;
+          uploaded_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          chantier_id: string;
+          nom: string;
+          categorie?: string;
+          description?: string | null;
+          fichier_url: string;
+          fichier_nom: string;
+          fichier_taille?: number | null;
+          version?: number;
+          uploaded_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          nom?: string;
+          categorie?: string;
+          description?: string | null;
+          fichier_url?: string;
+          fichier_nom?: string;
+          fichier_taille?: number | null;
+          version?: number;
+          updated_at?: string;
+        };
+      };
+      base_documentaire: {
+        Row: {
+          id: string;
+          titre: string;
+          source: string;
+          reference: string | null;
+          description: string | null;
+          fichier_url: string;
+          fichier_nom: string;
+          fichier_taille: number | null;
+          type_fichier: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          titre: string;
+          source?: string;
+          reference?: string | null;
+          description?: string | null;
+          fichier_url: string;
+          fichier_nom: string;
+          fichier_taille?: number | null;
+          type_fichier?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          titre?: string;
+          source?: string;
+          reference?: string | null;
+          description?: string | null;
+          fichier_url?: string;
+          fichier_nom?: string;
+          fichier_taille?: number | null;
+          type_fichier?: string;
+          updated_at?: string;
+        };
+      };
+      point_controle_doc_liens: {
+        Row: {
+          id: string;
+          document_id: string;
+          point_controle_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          document_id: string;
+          point_controle_id: string;
+          created_at?: string;
+        };
+        Update: {
+          document_id?: string;
+          point_controle_id?: string;
+        };
+      };
+      subscriptions: {
+        Row: {
+          id: string;
+          user_id: string;
+          stripe_customer_id: string;
+          stripe_subscription_id: string | null;
+          status: string;
+          plan: string;
+          current_period_start: string | null;
+          current_period_end: string | null;
+          trial_end: string | null;
+          cancel_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          stripe_customer_id: string;
+          stripe_subscription_id?: string | null;
+          status?: string;
+          plan?: string;
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          trial_end?: string | null;
+          cancel_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          stripe_subscription_id?: string | null;
+          status?: string;
+          plan?: string;
+          current_period_start?: string | null;
+          current_period_end?: string | null;
+          trial_end?: string | null;
+          cancel_at?: string | null;
+          updated_at?: string;
+        };
+      };
+      audit_logs: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          action: string;
+          resource: string;
+          resource_id: string | null;
+          details: Json | null;
+          ip_address: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          action: string;
+          resource: string;
+          resource_id?: string | null;
+          details?: Json | null;
+          ip_address?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          action?: string;
+          resource?: string;
+          resource_id?: string | null;
+          details?: Json | null;
         };
       };
     };

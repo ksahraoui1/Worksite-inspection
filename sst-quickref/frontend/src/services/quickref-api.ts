@@ -25,6 +25,28 @@ const API_HEADERS: Record<string, string> = import.meta.env.DEV
 
 let lastRateLimitRemaining: number | null = null
 
+// Admin key management
+export function getAdminKey(): string | null {
+  return localStorage.getItem('quickref_admin_key')
+}
+
+export function setAdminKey(key: string): void {
+  localStorage.setItem('quickref_admin_key', key)
+}
+
+export function clearAdminKey(): void {
+  localStorage.removeItem('quickref_admin_key')
+}
+
+function buildHeaders(): Record<string, string> {
+  const headers = { ...API_HEADERS }
+  const adminKey = getAdminKey()
+  if (adminKey) {
+    headers['x-admin-key'] = adminKey
+  }
+  return headers
+}
+
 function extractRateLimitHeader(response: Response): void {
   const remaining = response.headers.get('X-RateLimit-Remaining')
   if (remaining !== null) {
@@ -39,7 +61,7 @@ export function getRateLimitRemaining(): number | null {
 export async function sendQuestion(query: QuickRefQuery): Promise<QuickRefResponse> {
   const response = await fetch(`${API_BASE}/quickref-query`, {
     method: 'POST',
-    headers: API_HEADERS,
+    headers: buildHeaders(),
     body: JSON.stringify(query),
   })
 
@@ -61,7 +83,7 @@ export async function sendQuestion(query: QuickRefQuery): Promise<QuickRefRespon
 export async function sendFeedback(feedback: QuickRefFeedback): Promise<void> {
   const response = await fetch(`${API_BASE}/quickref-feedback`, {
     method: 'POST',
-    headers: API_HEADERS,
+    headers: buildHeaders(),
     body: JSON.stringify(feedback),
   })
 

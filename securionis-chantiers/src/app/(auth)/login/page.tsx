@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -28,12 +29,12 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/chantiers");
+    router.push("/dashboard");
     router.refresh();
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+    <div className="bg-white rounded-xl shadow-sm border border-gray-400 p-5 sm:p-8">
       <div className="text-center mb-8">
         <h1 className="text-2xl font-bold text-gray-900">
           Securionis Chantiers
@@ -64,12 +65,21 @@ export default function LoginPage() {
         </div>
 
         <div>
-          <label
-            htmlFor="password"
-            className="block text-sm font-medium text-gray-700 mb-1"
-          >
-            Mot de passe
-          </label>
+          <div className="flex items-center justify-between mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-700"
+            >
+              Mot de passe
+            </label>
+            <button
+              type="button"
+              onClick={() => { window.location.href = "/forgot-password"; }}
+              className="text-xs text-blue-600 hover:underline"
+            >
+              Mot de passe oublié ?
+            </button>
+          </div>
           <input
             id="password"
             type="password"
@@ -95,6 +105,17 @@ export default function LoginPage() {
           {loading ? "Connexion..." : "Se connecter"}
         </button>
       </form>
+
+      <p className="text-center text-sm text-gray-500 mt-6">
+        Pas encore de compte ?{" "}
+        <button
+          type="button"
+          onClick={() => { window.location.href = "/register"; }}
+          className="text-blue-600 hover:underline font-medium"
+        >
+          Créer un compte
+        </button>
+      </p>
     </div>
   );
 }

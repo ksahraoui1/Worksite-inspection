@@ -4,7 +4,7 @@
  * Gauche: ChatWindow. Droite: SourceCards. Bas: Disclaimer.
  * Cache offline, bannière hors-ligne, désactivation input offline.
  */
-import { computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import ChatWindow from '@/components/ChatWindow.vue'
 import SourceCard from '@/components/SourceCard.vue'
@@ -12,6 +12,7 @@ import DisclaimerBanner from '@/components/DisclaimerBanner.vue'
 import { useChat } from '@/composables/useChat'
 import { useOnlineStatus } from '@/composables/useOnlineStatus'
 import { useOfflineCache } from '@/composables/useOfflineCache'
+import { getAdminKey, setAdminKey, clearAdminKey } from '@/services/quickref-api'
 import type { QuickRefSource } from '@/types'
 
 const router = useRouter()
@@ -60,6 +61,27 @@ async function handleClear() {
 function goHome() {
   router.push('/')
 }
+
+// Admin key management
+const showAdminModal = ref(false)
+const adminKeyInput = ref('')
+const isAdmin = ref(!!getAdminKey())
+
+function openAdminModal() {
+  adminKeyInput.value = getAdminKey() || ''
+  showAdminModal.value = true
+}
+
+function saveAdminKey() {
+  if (adminKeyInput.value.trim()) {
+    setAdminKey(adminKeyInput.value.trim())
+    isAdmin.value = true
+  } else {
+    clearAdminKey()
+    isAdmin.value = false
+  }
+  showAdminModal.value = false
+}
 </script>
 
 <template>
@@ -94,6 +116,26 @@ function goHome() {
           >
             {{ rateLimit.remaining.value }} requêtes restantes
           </span>
+
+          <!-- Admin badge -->
+          <span
+            v-if="isAdmin"
+            class="text-xs bg-teal-600 text-white px-2 py-1 rounded-full font-medium"
+          >
+            Pro
+          </span>
+
+          <!-- Admin key -->
+          <button
+            type="button"
+            class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+            title="Clé admin"
+            @click="openAdminModal"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+            </svg>
+          </button>
 
           <!-- Clear chat -->
           <button
@@ -192,5 +234,39 @@ function goHome() {
 
     <!-- Disclaimer -->
     <DisclaimerBanner />
+
+    <!-- Admin key modal -->
+    <div
+      v-if="showAdminModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      @click.self="showAdminModal = false"
+    >
+      <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Clé d'accès Pro</h3>
+        <p class="text-sm text-gray-500 mb-4">Entrez votre clé pour un accès illimité.</p>
+        <input
+          v-model="adminKeyInput"
+          type="password"
+          placeholder="sqr-admin-..."
+          class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 mb-4"
+        />
+        <div class="flex gap-3 justify-end">
+          <button
+            type="button"
+            class="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100"
+            @click="showAdminModal = false"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            class="px-4 py-2 rounded-lg text-sm bg-teal-600 text-white font-medium hover:bg-teal-700"
+            @click="saveAdminKey"
+          >
+            Enregistrer
+          </button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>

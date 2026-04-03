@@ -17,9 +17,10 @@ ALTER TABLE chantier_inspecteurs ENABLE ROW LEVEL SECURITY;
 
 -- ============================================================
 -- Helper function: returns the current user's role
+-- Placed in PUBLIC schema (not auth) for Supabase cloud compat
 -- ============================================================
 
-CREATE OR REPLACE FUNCTION auth.user_role()
+CREATE OR REPLACE FUNCTION public.user_role()
 RETURNS text
 LANGUAGE sql
 STABLE
@@ -37,7 +38,7 @@ CREATE POLICY profiles_select_own ON profiles
     FOR SELECT USING (id = auth.uid());
 
 CREATE POLICY profiles_select_admin ON profiles
-    FOR SELECT USING (auth.user_role() = 'administrateur');
+    FOR SELECT USING (public.user_role() = 'administrateur');
 
 CREATE POLICY profiles_update_own ON profiles
     FOR UPDATE USING (id = auth.uid())
@@ -63,28 +64,25 @@ CREATE POLICY categories_select ON categories
 -- points_controle
 -- ============================================================
 
--- All authenticated users can read active points
 CREATE POLICY pc_select_active ON points_controle
     FOR SELECT TO authenticated
     USING (actif = true);
 
--- Admin can insert custom points
 CREATE POLICY pc_insert_admin ON points_controle
     FOR INSERT TO authenticated
     WITH CHECK (
-        auth.user_role() = 'administrateur'
+        public.user_role() = 'administrateur'
         AND is_custom = true
     );
 
--- Admin can update custom points
 CREATE POLICY pc_update_admin ON points_controle
     FOR UPDATE TO authenticated
     USING (
-        auth.user_role() = 'administrateur'
+        public.user_role() = 'administrateur'
         AND is_custom = true
     )
     WITH CHECK (
-        auth.user_role() = 'administrateur'
+        public.user_role() = 'administrateur'
         AND is_custom = true
     );
 
@@ -92,7 +90,6 @@ CREATE POLICY pc_update_admin ON points_controle
 -- chantiers
 -- ============================================================
 
--- Inspecteur sees only assigned chantiers
 CREATE POLICY chantiers_inspecteur_select ON chantiers
     FOR SELECT TO authenticated
     USING (
@@ -103,11 +100,14 @@ CREATE POLICY chantiers_inspecteur_select ON chantiers
         )
     );
 
--- Admin has full access
+CREATE POLICY chantiers_inspecteur_insert ON chantiers
+    FOR INSERT TO authenticated
+    WITH CHECK (created_by = auth.uid());
+
 CREATE POLICY chantiers_admin_all ON chantiers
     FOR ALL TO authenticated
-    USING (auth.user_role() = 'administrateur')
-    WITH CHECK (auth.user_role() = 'administrateur');
+    USING (public.user_role() = 'administrateur')
+    WITH CHECK (public.user_role() = 'administrateur');
 
 -- ============================================================
 -- destinataires (access via chantier ownership)
@@ -123,28 +123,43 @@ CREATE POLICY destinataires_inspecteur_select ON destinataires
         )
     );
 
+CREATE POLICY destinataires_inspecteur_manage ON destinataires
+    FOR ALL TO authenticated
+    USING (
+        EXISTS (
+            SELECT 1 FROM chantier_inspecteurs ci
+            WHERE ci.chantier_id = destinataires.chantier_id
+              AND ci.inspecteur_id = auth.uid()
+        )
+    )
+    WITH CHECK (
+        EXISTS (
+            SELECT 1 FROM chantier_inspecteurs ci
+            WHERE ci.chantier_id = destinataires.chantier_id
+              AND ci.inspecteur_id = auth.uid()
+        )
+    );
+
 CREATE POLICY destinataires_admin_all ON destinataires
     FOR ALL TO authenticated
-    USING (auth.user_role() = 'administrateur')
-    WITH CHECK (auth.user_role() = 'administrateur');
+    USING (public.user_role() = 'administrateur')
+    WITH CHECK (public.user_role() = 'administrateur');
 
 -- ============================================================
 -- visites
 -- ============================================================
 
--- Inspecteur sees own visites on assigned chantiers
 CREATE POLICY visites_inspecteur_select ON visites
     FOR SELECT TO authenticated
     USING (
         inspecteur_id = auth.uid()
-        AND EXISTS (
+        OR EXISTS (
             SELECT 1 FROM chantier_inspecteurs ci
             WHERE ci.chantier_id = visites.chantier_id
               AND ci.inspecteur_id = auth.uid()
         )
     );
 
--- Inspecteur can insert visites on assigned chantiers
 CREATE POLICY visites_inspecteur_insert ON visites
     FOR INSERT TO authenticated
     WITH CHECK (
@@ -156,26 +171,15 @@ CREATE POLICY visites_inspecteur_insert ON visites
         )
     );
 
--- Inspecteur can update own visites
 CREATE POLICY visites_inspecteur_update ON visites
     FOR UPDATE TO authenticated
-    USING (
-        inspecteur_id = auth.uid()
-        AND EXISTS (
-            SELECT 1 FROM chantier_inspecteurs ci
-            WHERE ci.chantier_id = visites.chantier_id
-              AND ci.inspecteur_id = auth.uid()
-        )
-    )
-    WITH CHECK (
-        inspecteur_id = auth.uid()
-    );
+    USING (inspecteur_id = auth.uid())
+    WITH CHECK (inspecteur_id = auth.uid());
 
--- Admin full access
 CREATE POLICY visites_admin_all ON visites
     FOR ALL TO authenticated
-    USING (auth.user_role() = 'administrateur')
-    WITH CHECK (auth.user_role() = 'administrateur');
+    USING (public.user_role() = 'administrateur')
+    WITH CHECK (public.user_role() = 'administrateur');
 
 -- ============================================================
 -- reponses (access via visite ownership)
@@ -220,8 +224,8 @@ CREATE POLICY reponses_inspecteur_update ON reponses
 
 CREATE POLICY reponses_admin_all ON reponses
     FOR ALL TO authenticated
-    USING (auth.user_role() = 'administrateur')
-    WITH CHECK (auth.user_role() = 'administrateur');
+    USING (public.user_role() = 'administrateur')
+    WITH CHECK (public.user_role() = 'administrateur');
 
 -- ============================================================
 -- ecarts (access via chantier ownership)
@@ -266,20 +270,18 @@ CREATE POLICY ecarts_inspecteur_update ON ecarts
 
 CREATE POLICY ecarts_admin_all ON ecarts
     FOR ALL TO authenticated
-    USING (auth.user_role() = 'administrateur')
-    WITH CHECK (auth.user_role() = 'administrateur');
+    USING (public.user_role() = 'administrateur')
+    WITH CHECK (public.user_role() = 'administrateur');
 
 -- ============================================================
 -- chantier_inspecteurs
 -- ============================================================
 
--- Inspecteur reads own assignments
 CREATE POLICY ci_inspecteur_select ON chantier_inspecteurs
     FOR SELECT TO authenticated
     USING (inspecteur_id = auth.uid());
 
--- Admin full CRUD
 CREATE POLICY ci_admin_all ON chantier_inspecteurs
     FOR ALL TO authenticated
-    USING (auth.user_role() = 'administrateur')
-    WITH CHECK (auth.user_role() = 'administrateur');
+    USING (public.user_role() = 'administrateur')
+    WITH CHECK (public.user_role() = 'administrateur');

@@ -1,17 +1,34 @@
 import { Resend } from "resend";
+import { getResendApiKey, getResendFromEmail } from "@/lib/env";
+import { isAllowedSupabaseUrl, escapeHtml } from "@/lib/utils/security";
 
 function getResend() {
-  return new Resend(process.env.RESEND_API_KEY);
+  return new Resend(getResendApiKey());
+}
+
+interface EntrepriseInfo {
+  nom: string;
+  adresse?: string | null;
+  npa?: string | null;
+  ville?: string | null;
+  telephone?: string | null;
+  email?: string | null;
 }
 
 export async function sendRapport(
   rapportUrl: string,
   destinataires: { nom: string; email: string }[],
   chantierAdresse: string,
-  dateVisite: string
+  dateVisite: string,
+  inspecteurNom?: string,
+  entreprise?: EntrepriseInfo | null
 ): Promise<string[]> {
-  // Download PDF from Storage URL
-  const pdfResponse = await fetch(rapportUrl);
+  // SSRF protection: whitelist stricte du hostname Supabase
+  if (!isAllowedSupabaseUrl(rapportUrl)) {
+    throw new Error("URL de rapport non autorisée");
+  }
+
+  const pdfResponse = await fetch(rapportUrl, { signal: AbortSignal.timeout(30000) });
   if (!pdfResponse.ok) {
     throw new Error("Impossible de telecharger le PDF depuis le stockage");
   }
@@ -26,40 +43,63 @@ export async function sendRapport(
   const subject = `Rapport de visite — ${chantierAdresse} — ${dateFormatted}`;
   const filename = `rapport_visite_${dateVisite}.pdf`;
 
-  const sentTo: string[] = [];
+  const allEmails = destinataires.map((d) => d.email);
 
-  for (const dest of destinataires) {
-    try {
-      const resend = getResend();
-      await resend.emails.send({
-        from:
-          process.env.RESEND_FROM_EMAIL ?? "rapports@securionis.ch",
-        to: dest.email,
-        subject,
-        html: `
-          <p>Bonjour ${dest.nom},</p>
-          <p>Veuillez trouver ci-joint le rapport de la visite de controle effectuee le ${dateFormatted} sur le chantier situe a l'adresse suivante :</p>
-          <p><strong>${chantierAdresse}</strong></p>
-          <p>Merci de prendre connaissance des eventuels ecarts constates et de proceder aux corrections dans les delais impartis.</p>
-          <p>Cordialement,<br/>Securionis SA</p>
-        `,
-        attachments: [
-          {
-            filename,
-            content: pdfBuffer,
-          },
-        ],
-      });
+  try {
+    const resend = getResend();
+    await resend.emails.send({
+      from: getResendFromEmail(),
+      to: allEmails,
+      subject,
+      html: buildEmailHtml(dateFormatted, inspecteurNom, entreprise),
+      attachments: [
+        {
+          filename,
+          content: pdfBuffer,
+        },
+      ],
+    });
 
-      sentTo.push(dest.email);
-    } catch (err) {
-      console.error(`Failed to send email to ${dest.email}:`, err);
+    return allEmails;
+  } catch (err) {
+    console.error("Failed to send email to all recipients:", err);
+    throw new Error("Erreur lors de l'envoi de l'email");
+  }
+}
+
+function buildEmailHtml(
+  dateFormatted: string,
+  inspecteurNom?: string,
+  entreprise?: EntrepriseInfo | null
+): string {
+  let signature = "";
+
+  if (entreprise) {
+    const lines: string[] = [];
+    lines.push(`<strong>${escapeHtml(entreprise.nom)}</strong>`);
+    if (inspecteurNom) lines.push(escapeHtml(inspecteurNom));
+    if (entreprise.adresse) {
+      const adresseLine = [entreprise.adresse, entreprise.npa, entreprise.ville]
+        .filter(Boolean)
+        .join(" ");
+      lines.push(escapeHtml(adresseLine));
     }
+    if (entreprise.telephone) lines.push(escapeHtml(entreprise.telephone));
+    if (entreprise.email) lines.push(escapeHtml(entreprise.email));
+
+    signature = `
+      <hr style="border:none;border-top:1px solid #999;margin:20px 0"/>
+      <p style="margin:0">${lines.join("<br/>")}</p>`;
+  } else if (inspecteurNom) {
+    signature = `
+      <hr style="border:none;border-top:1px solid #999;margin:20px 0"/>
+      <p style="margin:0">${escapeHtml(inspecteurNom)}</p>`;
   }
 
-  if (sentTo.length === 0) {
-    throw new Error("Aucun email n'a pu etre envoye");
-  }
-
-  return sentTo;
+  return `
+    <p>Bonjour,</p>
+    <p>Veuillez trouver ci-joint le rapport de visite du ${dateFormatted}.</p>
+    <p>Excellente journée<br/>Portez-vous bien<br/>Bien à vous</p>
+    ${signature}
+  `;
 }

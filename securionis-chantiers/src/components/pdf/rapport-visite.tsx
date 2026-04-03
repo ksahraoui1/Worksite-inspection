@@ -4,10 +4,11 @@ import {
   Page,
   Text,
   View,
+  Image,
   StyleSheet,
 } from "@react-pdf/renderer";
 import type { Tables } from "@/types/database";
-import { LABELS_STATUT_ECART } from "@/lib/utils/constants";
+import { LABELS_STATUT_ECART, stripMarkdown } from "@/lib/utils/constants";
 
 const styles = StyleSheet.create({
   page: {
@@ -18,12 +19,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 40,
     color: "#1a1a1a",
   },
-  header: {
-    fontSize: 18,
-    fontFamily: "Helvetica-Bold",
+  headerRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 20,
-    textAlign: "center",
+  },
+  logoImage: {
+    height: 40,
+    maxWidth: 140,
+    objectFit: "contain",
+  },
+  headerTitle: {
+    fontSize: 16,
+    fontFamily: "Helvetica-Bold",
     color: "#1e40af",
+    flex: 1,
+    textAlign: "center",
+  },
+  headerTitleAlone: {
+    fontSize: 16,
+    fontFamily: "Helvetica-Bold",
+    color: "#1e40af",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  logoPlaceholder: {
+    width: 140,
   },
   sectionTitle: {
     fontSize: 13,
@@ -75,6 +97,23 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: "#dc2626",
   },
+  constatationCorrigee: {
+    marginBottom: 10,
+    padding: 8,
+    backgroundColor: "#f0fdf4",
+    borderRadius: 4,
+    borderLeftWidth: 3,
+    borderLeftColor: "#16a34a",
+  },
+  badgeCorrige: {
+    fontSize: 8,
+    fontFamily: "Helvetica-Bold",
+    color: "#ffffff",
+    backgroundColor: "#16a34a",
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
   constatationTitle: {
     fontFamily: "Helvetica-Bold",
     fontSize: 10,
@@ -84,6 +123,19 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: "#374151",
     marginBottom: 2,
+  },
+  photosRow: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 6,
+    marginTop: 6,
+  },
+  photoImage: {
+    width: 120,
+    height: 90,
+    objectFit: "cover",
+    borderRadius: 3,
+    border: "0.5px solid #d1d5db",
   },
   ecartRow: {
     flexDirection: "row",
@@ -128,6 +180,12 @@ const styles = StyleSheet.create({
     fontSize: 8,
     color: "#9ca3af",
   },
+  footerAddress: {
+    fontSize: 7,
+    color: "#9ca3af",
+    marginTop: 3,
+    textAlign: "center",
+  },
   pageNumber: {
     fontSize: 8,
     color: "#9ca3af",
@@ -139,6 +197,46 @@ const styles = StyleSheet.create({
   },
 });
 
+// Affiche une remarque en texte brut dans le PDF (sans markdown)
+function RemarqueText({ text }: { text: string }) {
+  const cleaned = stripMarkdown(text);
+  const lines = cleaned.split("\n").filter((l) => l.trim() !== "");
+
+  return (
+    <View style={{ marginTop: 2 }}>
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+
+        // Puce : - texte
+        if (/^[-•]\s/.test(trimmed)) {
+          const content = trimmed.replace(/^[-•]\s+/, "");
+          return (
+            <View key={i} style={{ flexDirection: "row", paddingLeft: 8, marginBottom: 1 }}>
+              <Text style={{ fontSize: 9, color: "#374151", marginRight: 4 }}>-</Text>
+              <Text style={{ fontSize: 9, color: "#374151", flex: 1 }}>{content}</Text>
+            </View>
+          );
+        }
+
+        // Ligne numérotée : 1. texte
+        if (/^\d+\.\s/.test(trimmed)) {
+          return (
+            <Text key={i} style={{ fontSize: 9, color: "#374151", marginBottom: 1, paddingLeft: 8 }}>
+              {trimmed}
+            </Text>
+          );
+        }
+
+        return (
+          <Text key={i} style={{ fontSize: 9, color: "#374151", marginBottom: 1 }}>
+            {trimmed}
+          </Text>
+        );
+      })}
+    </View>
+  );
+}
+
 interface RapportVisiteProps {
   chantier: Tables<"chantiers">;
   visite: Tables<"visites">;
@@ -148,6 +246,12 @@ interface RapportVisiteProps {
   })[];
   ecarts: Tables<"ecarts">[];
   destinataires: Tables<"destinataires">[];
+  entrepriseNom?: string | null;
+  entrepriseLogoUrl?: string | null;
+  entrepriseAdresse?: string | null;
+  entrepriseTelephone?: string | null;
+  entrepriseEmail?: string | null;
+  signatureDataUri?: string | null;
 }
 
 export function RapportVisite({
@@ -157,6 +261,12 @@ export function RapportVisite({
   reponses,
   ecarts,
   destinataires,
+  entrepriseNom,
+  entrepriseLogoUrl,
+  entrepriseAdresse,
+  entrepriseTelephone,
+  entrepriseEmail,
+  signatureDataUri,
 }: RapportVisiteProps) {
   const dateFormatted = new Date(visite.date_visite).toLocaleDateString(
     "fr-CH",
@@ -167,32 +277,64 @@ export function RapportVisite({
     (r) => r.valeur === "non_conforme"
   );
 
+  // Map reponse_id → ecart pour afficher délai/statut sous chaque NC
+  const ecartByReponseId = new Map(
+    ecarts.map((e) => [e.reponse_id, e])
+  );
+
+  const heureFormatted = visite.heure_visite
+    ? ` – ${visite.heure_visite.slice(0, 5)}`
+    : "";
+
   const infoRows: [string, string][] = [
     ["Inspecteur(s)", inspecteur.nom],
-    ["Date", dateFormatted],
-    ["Adresse", chantier.adresse],
-    ["Nature travaux", chantier.nature_travaux],
+    ["Date de la visite", `${dateFormatted}${heureFormatted}`],
   ];
 
-  if (chantier.numero_camac)
-    infoRows.push(["N. CAMAC", chantier.numero_camac]);
-  if (chantier.numero_parcelle)
-    infoRows.push(["N. parcelle", chantier.numero_parcelle]);
-  if (chantier.numero_eca)
-    infoRows.push(["N. ECA", chantier.numero_eca]);
-  if (chantier.contact_nom)
-    infoRows.push(["Contact", chantier.contact_nom]);
+  // Nom + Adresse du chantier
+  if (chantier.nom) {
+    infoRows.push(["Nom du chantier", chantier.nom]);
+  }
+  infoRows.push(["Adresse du chantier", chantier.adresse]);
+  infoRows.push(["Nature des travaux", chantier.nature_travaux]);
+
+  // Références sur une ligne (comme le PDF FWN)
+  const refs: string[] = [];
+  if (chantier.ref_communale) refs.push(`Réf. communale: ${chantier.ref_communale}`);
+  if (chantier.numero_camac) refs.push(`N° CAMAC: ${chantier.numero_camac}`);
+  if (chantier.numero_parcelle) refs.push(`N° parcelle: ${chantier.numero_parcelle}`);
+  if (chantier.numero_eca) refs.push(`N° ECA: ${chantier.numero_eca}`);
+  if (refs.length > 0) {
+    infoRows.push(["Références", refs.join("  |  ")]);
+  }
+
+  if (visite.renseignements_par) {
+    infoRows.push(["Renseignements donnés par", visite.renseignements_par]);
+  } else if (chantier.contact_nom) {
+    infoRows.push(["Renseignements donnés par", chantier.contact_nom]);
+  }
 
   // Collect delais from NC reponses
   const delais = ecarts
     .filter((e) => e.delai)
     .map((e) => ({ description: e.description, delai: e.delai! }));
 
+  const footerLabel = entrepriseNom ?? "Securionis";
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
         {/* Header */}
-        <Text style={styles.header}>Rapport de visite</Text>
+        {entrepriseLogoUrl ? (
+          <View style={styles.headerRow}>
+            <Image src={entrepriseLogoUrl} style={styles.logoImage} />
+            <Text style={styles.headerTitle}>Rapport de visite</Text>
+            {/* Spacer to keep title centered */}
+            <View style={styles.logoPlaceholder} />
+          </View>
+        ) : (
+          <Text style={styles.headerTitleAlone}>Rapport de visite</Text>
+        )}
 
         {/* Info table */}
         <View style={styles.table}>
@@ -208,72 +350,59 @@ export function RapportVisite({
         <Text style={styles.sectionTitle}>Constatations</Text>
         {nonConformeReponses.length === 0 ? (
           <Text style={{ fontSize: 10, color: "#16a34a", marginBottom: 8 }}>
-            Aucune non-conformite constatee.
+            Aucune non-conformité constatée.
           </Text>
         ) : (
-          nonConformeReponses.map((r) => (
-            <View key={r.id} style={styles.constatation}>
-              <Text style={styles.constatationTitle}>
-                {(r.points_controle as { intitule: string } | null)?.intitule ??
-                  "Point de controle"}
-              </Text>
-              {r.remarque && (
-                <Text style={styles.constatationText}>
-                  Remarque : {r.remarque}
-                </Text>
-              )}
-              {r.photos && r.photos.length > 0 && (
-                <Text style={styles.constatationText}>
-                  Photos : {r.photos.length} photo(s) jointe(s)
-                </Text>
-              )}
-            </View>
-          ))
-        )}
+          nonConformeReponses.map((r) => {
+            const ecart = ecartByReponseId.get(r.id);
+            const isCorrige = ecart?.statut === "corrige";
 
-        {/* Historique des ecarts */}
-        {ecarts.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>Historique des ecarts</Text>
-            <View style={styles.table}>
-              <View style={styles.tableRowHeader}>
-                <Text style={[styles.ecartCell, styles.ecartCellDesc, { fontFamily: "Helvetica-Bold" }]}>
-                  Description
-                </Text>
-                <Text style={[styles.ecartCell, styles.ecartCellDelai, { fontFamily: "Helvetica-Bold" }]}>
-                  Delai
-                </Text>
-                <Text style={[styles.ecartCell, styles.ecartCellStatut, { fontFamily: "Helvetica-Bold" }]}>
-                  Statut
-                </Text>
-              </View>
-              {ecarts.map((ecart) => (
-                <View key={ecart.id} style={styles.ecartRow}>
-                  <Text style={[styles.ecartCell, styles.ecartCellDesc]}>
-                    {ecart.description}
+            return (
+              <View key={r.id} style={isCorrige ? styles.constatationCorrigee : styles.constatation}>
+                <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                  <Text style={styles.constatationTitle}>
+                    {(r.points_controle as { intitule: string } | null)?.intitule ??
+                      "Point de contrôle"}
                   </Text>
-                  <Text style={[styles.ecartCell, styles.ecartCellDelai]}>
-                    {ecart.delai ?? "-"}
-                  </Text>
-                  <Text style={[styles.ecartCell, styles.ecartCellStatut]}>
-                    {LABELS_STATUT_ECART[ecart.statut] ?? ecart.statut}
-                  </Text>
+                  {isCorrige && (
+                    <Text style={styles.badgeCorrige}>CORRIGÉ</Text>
+                  )}
                 </View>
-              ))}
-            </View>
-          </>
+                {r.remarque && (
+                  <RemarqueText text={r.remarque} />
+                )}
+                {r.photos && r.photos.length > 0 && (
+                  <View style={styles.photosRow}>
+                    {r.photos.map((photoUrl, i) => (
+                      <Image key={i} src={photoUrl} style={styles.photoImage} />
+                    ))}
+                  </View>
+                )}
+                {ecart && (
+                  <View style={{ flexDirection: "row", gap: 12, marginTop: 4 }}>
+                    {ecart.delai && (
+                      <Text style={{ fontSize: 8, color: isCorrige ? "#166534" : "#b91c1c", fontFamily: "Helvetica-Bold" }}>
+                        Délai : {ecart.delai}
+                      </Text>
+                    )}
+                    <Text style={{ fontSize: 8, color: isCorrige ? "#16a34a" : "#6b7280", fontFamily: isCorrige ? "Helvetica-Bold" : "Helvetica" }}>
+                      Statut : {LABELS_STATUT_ECART[ecart.statut] ?? ecart.statut}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            );
+          })
         )}
 
-        {/* Delais */}
-        {delais.length > 0 && (
-          <>
-            <Text style={styles.sectionTitle}>Delai(s)</Text>
-            {delais.map((d, idx) => (
-              <Text key={idx} style={styles.delaiItem}>
-                - {d.description} : {d.delai}
-              </Text>
-            ))}
-          </>
+        {/* Signature */}
+        {signatureDataUri && (
+          <View style={{ marginTop: 24, alignItems: "flex-end" }}>
+            <Image
+              src={signatureDataUri}
+              style={{ width: 120, height: 120, objectFit: "contain" }}
+            />
+          </View>
         )}
 
         {/* Copie(s) */}
@@ -290,12 +419,20 @@ export function RapportVisite({
           </>
         )}
 
-        {/* Footer with page numbers */}
+        {/* Footer */}
         <View style={styles.footer} fixed>
           <View style={styles.footerLine}>
-            <Text style={styles.footerText}>
-              Securionis SA — Rapport de visite
-            </Text>
+            {/* Gauche : coordonnées entreprise */}
+            <View>
+              <Text style={styles.footerText}>{footerLabel}</Text>
+              {entrepriseAdresse && (
+                <Text style={styles.footerText}>{entrepriseAdresse}</Text>
+              )}
+              {entrepriseEmail && (
+                <Text style={styles.footerText}>{entrepriseEmail}</Text>
+              )}
+            </View>
+            {/* Droite : numéro de page */}
             <Text
               style={styles.pageNumber}
               render={({ pageNumber, totalPages }) =>

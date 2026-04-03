@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient, createServiceClient } from "@/lib/supabase/server";
+import { canAccessVisite, getUserRole } from "@/lib/utils/security";
+import { getLimits } from "@/lib/stripe/limits";
 
 export async function POST(
   request: NextRequest,
@@ -17,6 +19,21 @@ export async function POST(
 
     if (!user) {
       return NextResponse.json({ error: "Non autorise" }, { status: 401 });
+    }
+
+    // Vérification d'autorisation
+    if (!(await canAccessVisite(supabase, user.id, visiteId))) {
+      return NextResponse.json({ error: "Accès non autorisé" }, { status: 403 });
+    }
+
+    // Vérification limites plan
+    const role = await getUserRole(supabase, user.id);
+    const limits = getLimits(role ?? "invité");
+    if (!limits.canGeneratePdf) {
+      return NextResponse.json(
+        { error: "La génération de rapports PDF est réservée aux abonnés. Passez à l'offre payante." },
+        { status: 403 }
+      );
     }
 
     // Load visite
@@ -73,6 +90,25 @@ export async function POST(
       .select("*")
       .eq("chantier_id", visite.chantier_id);
 
+    // Load entreprise (logo + nom + coordonnées)
+    const { data: entreprise } = await supabase
+      .from("entreprises")
+      .select("nom, logo_url, adresse, npa, ville, telephone, email")
+      .limit(1)
+      .maybeSingle();
+
+    // Load signature image as data URI
+    const fs = await import("fs/promises");
+    const path = await import("path");
+    let signatureDataUri: string | null = null;
+    try {
+      const sigPath = path.join(process.cwd(), "public", "signature-inspecteur.png");
+      const sigBuffer = await fs.readFile(sigPath);
+      signatureDataUri = `data:image/png;base64,${sigBuffer.toString("base64")}`;
+    } catch {
+      // Signature file not found, skip
+    }
+
     // Dynamically import react-pdf to avoid SSR issues
     const { renderToBuffer } = await import("@react-pdf/renderer");
     const { RapportVisite } = await import(
@@ -87,6 +123,16 @@ export async function POST(
         reponses: reponses ?? [],
         ecarts: ecarts ?? [],
         destinataires: destinataires ?? [],
+        entrepriseNom: entreprise?.nom ?? null,
+        entrepriseLogoUrl: entreprise?.logo_url ?? null,
+        entrepriseAdresse: entreprise
+          ? [entreprise.adresse, entreprise.npa, entreprise.ville]
+              .filter(Boolean)
+              .join(", ") || null
+          : null,
+        entrepriseTelephone: entreprise?.telephone ?? null,
+        entrepriseEmail: entreprise?.email ?? null,
+        signatureDataUri,
       })
     );
 
@@ -112,8 +158,8 @@ export async function POST(
       data: { publicUrl },
     } = serviceClient.storage.from("rapports").getPublicUrl(storagePath);
 
-    // Update visite with rapport URL
-    await supabase
+    // Update visite with rapport URL (service client to bypass RLS)
+    await serviceClient
       .from("visites")
       .update({ rapport_url: publicUrl })
       .eq("id", visiteId);
@@ -122,12 +168,7 @@ export async function POST(
   } catch (err) {
     console.error("PDF generation error:", err);
     return NextResponse.json(
-      {
-        error:
-          err instanceof Error
-            ? err.message
-            : "Erreur lors de la generation du PDF",
-      },
+      { error: "Erreur lors de la génération du PDF" },
       { status: 500 }
     );
   }

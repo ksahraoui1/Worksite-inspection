@@ -2,8 +2,10 @@
 
 import { useState, useCallback, useEffect } from "react";
 import { PhotoCapture } from "./photo-capture";
+import { PhotoAiAnalysis } from "./photo-ai-analysis";
+import { LegalAssistant } from "./legal-assistant";
 import { usePhotoUpload } from "@/hooks/use-photo-upload";
-import { VALEURS_REPONSE, LABELS_REPONSE } from "@/lib/utils/constants";
+import { VALEURS_REPONSE, LABELS_REPONSE, stripMarkdown } from "@/lib/utils/constants";
 import type { Tables } from "@/types/database";
 
 interface ChecklistItemProps {
@@ -20,6 +22,8 @@ interface ChecklistItemProps {
     remarque: string | null;
     photos: string[];
   }) => void;
+  documents?: Tables<"point_controle_documents">[];
+  linkedDocs?: { id: string; titre: string; fichier_url: string; type_fichier: string }[];
 }
 
 const VALEUR_OPTIONS = [
@@ -37,6 +41,8 @@ export function ChecklistItem({
   initialRemarque,
   initialPhotos = [],
   onChange,
+  documents = [],
+  linkedDocs = [],
 }: ChecklistItemProps) {
   const [valeur, setValeur] = useState(initialValeur ?? "");
   const [remarque, setRemarque] = useState(initialRemarque ?? "");
@@ -87,13 +93,35 @@ export function ChecklistItem({
   }
 
   function handlePhotoRemove(url: string) {
-    photoUpload.removePhoto(url);
     const newPhotos = photoUpload.photos.filter((p) => p !== url);
+    photoUpload.removePhoto(url);
     emitChange(valeur, remarque, newPhotos);
   }
 
+  async function handleReplaceAnnotated(oldUrl: string, blob: Blob) {
+    const newUrl = await photoUpload.replacePhoto(oldUrl, blob);
+    if (newUrl) {
+      const newPhotos = photoUpload.photos.map((p) => (p === oldUrl ? newUrl : p));
+      emitChange(valeur, remarque, newPhotos);
+    }
+  }
+
+  function handleAiRemarque(suggested: string) {
+    const cleaned = stripMarkdown(suggested);
+    const newRemarque = remarque
+      ? `${remarque}\n${cleaned}`
+      : cleaned;
+    setRemarque(newRemarque);
+    emitChange(valeur, newRemarque, photoUpload.photos);
+  }
+
+  function handleAiConformite(suggested: string) {
+    setValeur(suggested);
+    emitChange(suggested, remarque, photoUpload.photos);
+  }
+
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-4 space-y-4">
+    <div className="bg-white rounded-lg border border-gray-400 p-4 space-y-4">
       <div>
         <p className="font-medium text-gray-900">{pointControle.intitule}</p>
         {pointControle.critere && (
@@ -105,6 +133,45 @@ export function ChecklistItem({
           <p className="text-xs text-gray-400 mt-1">
             {pointControle.base_legale}
           </p>
+        )}
+        {pointControle.explications && (
+          <p className="text-xs text-gray-500 mt-1 italic">
+            {pointControle.explications}
+          </p>
+        )}
+        {(documents.length > 0 || linkedDocs.length > 0) && (
+          <div className="flex items-center gap-2 mt-2 flex-wrap">
+            {documents.map((doc) => (
+              <a
+                key={doc.id}
+                href={doc.fichier_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium bg-red-50 text-red-700 rounded hover:bg-red-100 transition-colors"
+              >
+                <span className="material-symbols-outlined text-xs">picture_as_pdf</span>
+                {doc.nom}
+              </a>
+            ))}
+            {linkedDocs.map((doc) => (
+              <a
+                key={doc.id}
+                href={doc.fichier_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`inline-flex items-center gap-1 px-2 py-1 text-[10px] font-medium rounded hover:opacity-80 transition-colors ${
+                  doc.type_fichier === "pdf"
+                    ? "bg-red-50 text-red-700"
+                    : "bg-blue-50 text-blue-700"
+                }`}
+              >
+                <span className="material-symbols-outlined text-xs">
+                  {doc.type_fichier === "pdf" ? "picture_as_pdf" : "image"}
+                </span>
+                {doc.titre}
+              </a>
+            ))}
+          </div>
         )}
       </div>
 
@@ -131,9 +198,17 @@ export function ChecklistItem({
         </label>
         <textarea
           value={remarque}
-          onChange={(e) => handleRemarqueChange(e.target.value)}
+          onChange={(e) => {
+            handleRemarqueChange(e.target.value);
+            e.target.style.height = "auto";
+            e.target.style.height = e.target.scrollHeight + "px";
+          }}
+          onFocus={(e) => {
+            e.target.style.height = "auto";
+            e.target.style.height = e.target.scrollHeight + "px";
+          }}
           rows={2}
-          className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+          className="w-full rounded-lg border border-gray-400 px-3 py-2 text-sm focus:border-blue-500 focus:ring-1 focus:ring-blue-500 resize-none overflow-hidden"
           placeholder="Remarque optionnelle..."
         />
       </div>
@@ -145,6 +220,29 @@ export function ChecklistItem({
         canAddMore={photoUpload.canAddMore}
         onCapture={handlePhotoCapture}
         onRemove={handlePhotoRemove}
+        onReplaceAnnotated={handleReplaceAnnotated}
+      />
+
+      {/* Analyse IA — visible quand au moins 1 photo est uploadée */}
+      {photoUpload.photos.length > 0 && (
+        <PhotoAiAnalysis
+          photoUrl={photoUpload.photos[photoUpload.photos.length - 1]}
+          pointControle={pointControle.intitule}
+          critere={pointControle.critere ?? undefined}
+          onApplyRemarque={handleAiRemarque}
+          onApplyConformite={handleAiConformite}
+        />
+      )}
+
+      {/* Assistant juridique */}
+      <LegalAssistant
+        context={{
+          intitule: pointControle.intitule,
+          critere: pointControle.critere,
+          baseLegale: pointControle.base_legale,
+          objet: pointControle.objet,
+        }}
+        onInsertRemarque={handleAiRemarque}
       />
     </div>
   );

@@ -6,7 +6,7 @@ import { ChecklistForm } from "@/components/visite/checklist-form";
 import { Modal } from "@/components/ui/modal";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { VALEURS_REPONSE } from "@/lib/utils/constants";
+import { VALEURS_REPONSE, stripMarkdown } from "@/lib/utils/constants";
 
 interface VisiteEnCoursProps {
   visiteId: string;
@@ -39,6 +39,7 @@ export function VisiteEnCours({
   const [ecartDrafts, setEcartDrafts] = useState<EcartDraft[]>([]);
   const [currentEcartIndex, setCurrentEcartIndex] = useState(0);
   const [delaiInput, setDelaiInput] = useState("");
+  const [renseignementsPar, setRenseignementsPar] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const handleValidate = useCallback(async () => {
@@ -75,10 +76,11 @@ export function VisiteEnCours({
 
         const ncWithDesc = ncReponses.map((r) => ({
           id: r.id,
-          description:
+          description: stripMarkdown(
             r.remarque ||
             pointMap.get(r.point_controle_id) ||
-            "Non-conformite",
+            "Non-conformité"
+          ),
         }));
 
         setNonConformeReponses(ncWithDesc);
@@ -148,10 +150,13 @@ export function VisiteEnCours({
         }
       }
 
-      // Update visite statut to terminee
+      // Update visite statut to terminee + renseignements_par
       const { error: updateError } = await supabase
         .from("visites")
-        .update({ statut: "terminee" })
+        .update({
+          statut: "terminee",
+          renseignements_par: renseignementsPar.trim() || null,
+        })
         .eq("id", visiteId);
 
       if (updateError) {
@@ -171,6 +176,23 @@ export function VisiteEnCours({
 
   return (
     <>
+      <div className="mb-6 bg-white rounded-lg border border-gray-400 p-4">
+        <label
+          htmlFor="renseignements_par"
+          className="block text-sm font-medium text-gray-700 mb-1"
+        >
+          Sur le chantier, renseignements donnés par
+        </label>
+        <input
+          id="renseignements_par"
+          type="text"
+          value={renseignementsPar}
+          onChange={(e) => setRenseignementsPar(e.target.value)}
+          className="w-full rounded-lg border border-gray-300 px-4 py-3 min-h-[44px] text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
+          placeholder="Nom de la personne"
+        />
+      </div>
+
       <ChecklistForm
         visiteId={visiteId}
         chantierId={chantierId}
@@ -189,7 +211,7 @@ export function VisiteEnCours({
       <Modal
         isOpen={showDelaiModal}
         onClose={() => setShowDelaiModal(false)}
-        title={`Ecart ${currentEcartIndex + 1} / ${ecartDrafts.length}`}
+        title={`Non-conformité ${currentEcartIndex + 1} / ${ecartDrafts.length}`}
         footer={
           <div className="flex gap-3">
             <Button
@@ -210,7 +232,7 @@ export function VisiteEnCours({
           <div className="space-y-4">
             <div>
               <p className="text-sm font-medium text-gray-700">
-                Non-conformite :
+                Non-conformité :
               </p>
               <p className="text-sm text-gray-900 mt-1">
                 {currentDraft.description}
@@ -221,14 +243,14 @@ export function VisiteEnCours({
                 htmlFor="delai"
                 className="block text-sm font-medium text-gray-700 mb-1"
               >
-                Delai de correction
+                Délai de correction
               </label>
               <input
                 id="delai"
                 type="text"
                 value={delaiInput}
                 onChange={(e) => setDelaiInput(e.target.value)}
-                placeholder="Ex: 7 jours, 30.04.2026, immediat..."
+                placeholder="Ex: 7 jours, 30.04.2026, immédiat..."
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 min-h-[44px] text-base focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
               />
             </div>

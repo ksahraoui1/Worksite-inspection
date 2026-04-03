@@ -33,7 +33,7 @@ Deno.serve(async (req: Request) => {
   const corsHeaders = {
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info, x-admin-key',
   }
 
   // CORS preflight
@@ -67,6 +67,10 @@ Deno.serve(async (req: Request) => {
       }, 400)
     }
 
+    // Check admin key — bypass rate limiting
+    const adminKey = req.headers.get('x-admin-key')
+    const isAdmin = adminKey === Deno.env.get('QUICKREF_ADMIN_KEY')
+
     // Build search query
     const searchQuery = buildSearchQuery(body)
 
@@ -98,7 +102,7 @@ Deno.serve(async (req: Request) => {
 
     // Check similarity threshold — refuse if all below
     if (topScore < SIMILARITY_THRESHOLD) {
-      await logQuery(supabase, queryId, body.question, [], Date.now() - startTime, 'anonymous', topScore, true)
+      await logQuery(supabase, queryId, body.question, [], Date.now() - startTime, isAdmin ? 'admin' : 'anonymous', topScore, true)
 
       return jsonResponse({
         query_id: queryId,
@@ -133,7 +137,7 @@ Deno.serve(async (req: Request) => {
     }))
 
     const sourcesUsed = sources.map((s) => `${s.source}:${s.article}`)
-    await logQuery(supabase, queryId, body.question, sourcesUsed, Date.now() - startTime, 'anonymous', topScore, false)
+    await logQuery(supabase, queryId, body.question, sourcesUsed, Date.now() - startTime, isAdmin ? 'admin' : 'anonymous', topScore, false)
 
     return jsonResponse({
       query_id: queryId,
@@ -240,7 +244,7 @@ function jsonResponse(body: unknown, status = 200): Response {
     headers: {
       'Content-Type': 'application/json',
       'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info, x-admin-key',
     },
   })
 }

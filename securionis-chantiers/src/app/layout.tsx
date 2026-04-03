@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
+import { SwRegister } from "@/components/ui/sw-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: "Securionis Chantiers",
-  description: "Application de controle de chantiers",
+  description: "Application de contrôle de chantiers",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
@@ -25,7 +26,16 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body className="font-sans antialiased">{children}</body>
+      <head>
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="font-sans antialiased">
+        <SwRegister />
+        {children}
+      </body>
     </html>
   );
 }
