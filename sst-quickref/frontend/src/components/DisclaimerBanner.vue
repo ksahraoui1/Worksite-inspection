@@ -11,7 +11,7 @@ const disclaimerText =
 </script>
 
 <template>
-  <div class="fixed bottom-0 inset-x-0 z-40 bg-gray-100 border-t border-gray-300">
+  <div class="shrink-0 bg-gray-100 border-t border-gray-300">
     <div class="max-w-5xl mx-auto px-4 py-2">
       <div class="flex items-center justify-between gap-3">
         <p v-if="collapsed" class="text-xs text-gray-500 truncate">

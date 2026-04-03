@@ -183,9 +183,9 @@ function saveAdminKey() {
     </div>
 
     <!-- Main content -->
-    <div class="flex-1 flex overflow-hidden">
+    <div class="flex-1 flex overflow-hidden min-h-0">
       <!-- Chat panel -->
-      <div class="flex-1 flex flex-col p-0 md:p-4 pb-14 min-w-0">
+      <div class="flex-1 flex flex-col min-w-0">
         <ChatWindow
           :messages="messages"
           :loading="loading"
@@ -197,7 +197,7 @@ function saveAdminKey() {
       <!-- Sources sidebar (hidden on mobile, shown on lg+) -->
       <aside
         v-if="currentSources.length > 0"
-        class="hidden lg:flex lg:flex-col lg:w-96 border-l border-gray-200 bg-white overflow-y-auto p-4 pb-14"
+        class="hidden lg:flex lg:flex-col lg:w-96 border-l border-gray-200 bg-white overflow-y-auto p-4"
       >
         <h2 class="text-sm font-semibold text-gray-700 uppercase tracking-wider mb-4">
           Sources citées
@@ -215,7 +215,7 @@ function saveAdminKey() {
     <!-- Mobile sources (collapsible, shown below chat on small screens) -->
     <details
       v-if="currentSources.length > 0"
-      class="lg:hidden border-t border-gray-200 bg-white shrink-0 mb-10"
+      class="lg:hidden border-t border-gray-200 bg-white shrink-0"
     >
       <summary class="min-h-[44px] flex items-center justify-between px-4 py-3 cursor-pointer text-sm font-semibold text-gray-700 hover:bg-gray-50">
         <span>Sources citées ({{ currentSources.length }})</span>
