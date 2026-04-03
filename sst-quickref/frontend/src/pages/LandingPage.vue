@@ -71,7 +71,7 @@ function goToChat() {
           <ChatWindow
             :messages="messages"
             :loading="loading"
-            placeholder="Ex: Quelles sont les obligations de l'employeur en matière de protection contre le bruit ?"
+            placeholder="Ex: hauteur garde-corps ? casque obligatoire ? échafaudage règles ?"
             @send="handleSend"
           />
         </div>

@@ -18,7 +18,7 @@ const props = withDefaults(
   {
     loading: false,
     disabled: false,
-    placeholder: 'Posez votre question réglementaire SST...',
+    placeholder: 'Ex: hauteur garde-corps ? casque obligatoire ? durée max de travail ?',
   }
 )
 
@@ -97,10 +97,10 @@ onMounted(() => scrollToBottom())
           </svg>
         </div>
         <h3 class="text-lg font-semibold text-gray-800 mb-1">
-          Assistant IA Réglementaire
+          Posez votre question
         </h3>
         <p class="text-sm text-gray-500 max-w-md">
-          Posez vos questions sur la réglementation SST suisse. Je cite mes sources avec les articles de loi correspondants.
+          Demandez-moi n'importe quoi sur la sécurité des chantiers en Suisse. Par exemple : "hauteur garde-corps ?", "casque obligatoire ?"
         </p>
       </div>
 
