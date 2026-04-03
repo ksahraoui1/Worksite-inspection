@@ -119,7 +119,7 @@ function goToChat() {
       </div>
     </section>
 
-    <!-- CTA -->
+    <!-- CTA (masqué provisoirement — réactiver avec Stripe)
     <section class="py-12 md:py-16 bg-teal-600 text-white">
       <div class="max-w-3xl mx-auto px-4 text-center">
         <h2 class="text-2xl md:text-3xl font-bold mb-3">
@@ -136,6 +136,7 @@ function goToChat() {
         </button>
       </div>
     </section>
+    -->
 
     <!-- Footer -->
     <footer class="bg-gray-900 text-gray-400 py-8">
