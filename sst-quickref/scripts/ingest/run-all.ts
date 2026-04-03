@@ -11,6 +11,10 @@
 import { parseOTConst } from './parse-otconst'
 import { parseCFST6508 } from './parse-cfst6508'
 import { parseOPA } from './parse-opa'
+import { parseOLT1 } from './parse-olt1'
+import { parseOLT2 } from './parse-olt2'
+import { parseOLT3 } from './parse-olt3'
+import { parseOLT4 } from './parse-olt4'
 import { generateEmbeddings } from './embed'
 import { uploadChunks } from './upload'
 import type { DocumentChunk } from './chunk'
@@ -85,6 +89,10 @@ async function runPipeline(): Promise<PipelineStats> {
     { name: 'OTConst', fn: parseOTConst },
     { name: 'CFST_6508', fn: parseCFST6508 },
     { name: 'OPA', fn: parseOPA },
+    { name: 'OLT1', fn: parseOLT1 },
+    { name: 'OLT2', fn: parseOLT2 },
+    { name: 'OLT3', fn: parseOLT3 },
+    { name: 'OLT4', fn: parseOLT4 },
   ]
 
   const allChunks: DocumentChunk[] = []
