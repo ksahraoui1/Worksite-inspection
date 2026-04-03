@@ -24,4 +24,4 @@ FORMAT :
 - Utilise un langage accessible, évite le jargon juridique inutile
 - Ne répète pas la question`
 
-export const DISCLAIMER_TEXT = `SST-QuickRef est un outil d'aide à la référence réglementaire. Les informations fournies sont basées sur les textes officiels indexés à la date indiquée. Elles ne constituent pas un avis juridique. En cas de doute ou de litige, consultez un juriste spécialisé en droit du travail suisse ou les autorités compétentes (SUVA, SECO, Inspection du travail). Securionis SA décline toute responsabilité en cas d'utilisation non conforme.`
+export const DISCLAIMER_TEXT = `SST-QuickRef est un outil d'aide à la référence réglementaire. Les informations fournies sont basées sur les textes officiels indexés à la date indiquée. Elles ne constituent pas un avis juridique. En cas de doute ou de litige, consultez un juriste spécialisé en droit du travail suisse ou les autorités compétentes (SUVA, SECO, Inspection du travail). Securionis décline toute responsabilité en cas d'utilisation non conforme.`

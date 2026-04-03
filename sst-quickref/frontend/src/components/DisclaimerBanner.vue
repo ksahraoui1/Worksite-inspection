@@ -7,7 +7,7 @@ import { ref } from 'vue'
 const collapsed = ref(true)
 
 const disclaimerText =
-  'SST-QuickRef est un outil d\'aide à la recherche réglementaire. Les réponses fournies sont générées par intelligence artificielle à partir de textes officiels et ne constituent pas un avis juridique. Vérifiez toujours les informations auprès des sources officielles avant toute application. Securionis Sàrl décline toute responsabilité en cas d\'erreur ou d\'omission.'
+  'SST-QuickRef est un outil d\'aide à la recherche réglementaire. Les réponses fournies sont générées par intelligence artificielle à partir de textes officiels et ne constituent pas un avis juridique. Vérifiez toujours les informations auprès des sources officielles avant toute application. Securionis décline toute responsabilité en cas d\'erreur ou d\'omission.'
 </script>
 
 <template>
