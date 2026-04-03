@@ -6,6 +6,7 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chunkDocument, type DocumentChunk } from './chunk'
+import { parsePdf } from './parse-pdf'
 
 const SOURCE = 'CFST_6508'
 const VERSION_DATE = '2024-01-01'
@@ -14,6 +15,7 @@ const SOURCE_URL =
 const LANGUAGE = 'fr'
 
 const DATA_FILE = resolve(process.cwd(), 'data', 'cfst6508.txt')
+const PDF_FILE = resolve(process.cwd(), 'data', 'cfst6508.pdf')
 
 /**
  * Generate realistic placeholder chunks representing CFST 6508 structure.
@@ -154,26 +156,26 @@ function generatePlaceholderChunks(): DocumentChunk[] {
  * Reads from local file if available, otherwise returns placeholder data.
  */
 export async function parseCFST6508(): Promise<DocumentChunk[]> {
+  if (existsSync(PDF_FILE)) {
+    return parsePdf({
+      pdfPath: PDF_FILE,
+      source: SOURCE,
+      versionDate: VERSION_DATE,
+      sourceUrl: SOURCE_URL,
+      language: LANGUAGE,
+      splitPattern: /(?=Chapitre\s+\d+|Section\s+\d+|\d+\.\d+\s+[A-Z])/g,
+    })
+  }
+
   if (existsSync(DATA_FILE)) {
-    console.log(`[CFST 6508] Reading from local file: ${DATA_FILE}`)
+    console.log(`[CFST 6508] Reading from local text file: ${DATA_FILE}`)
     const rawText = readFileSync(DATA_FILE, 'utf-8')
-
-    const chunks = chunkDocument(
-      rawText,
-      {
-        source: SOURCE,
-        versionDate: VERSION_DATE,
-        sourceUrl: SOURCE_URL,
-        language: LANGUAGE,
-      },
-      /(?=Chapitre\s+\d+|Section\s+\d+|\d+\.\d+\s+[A-Z])/g
-    )
-
-    console.log(`[CFST 6508] Parsed ${chunks.length} chunks from source file`)
+    const chunks = chunkDocument(rawText, { source: SOURCE, versionDate: VERSION_DATE, sourceUrl: SOURCE_URL, language: LANGUAGE }, /(?=Chapitre\s+\d+|Section\s+\d+|\d+\.\d+\s+[A-Z])/g)
+    console.log(`[CFST 6508] Parsed ${chunks.length} chunks from text file`)
     return chunks
   }
 
-  console.log(`[CFST 6508] Local file not found at ${DATA_FILE} — using placeholder data`)
+  console.log(`[CFST 6508] No PDF or text file found — using placeholder data`)
   const chunks = generatePlaceholderChunks()
   console.log(`[CFST 6508] Generated ${chunks.length} placeholder chunks`)
   return chunks

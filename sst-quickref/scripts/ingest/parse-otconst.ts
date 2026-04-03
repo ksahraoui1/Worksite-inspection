@@ -6,6 +6,7 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chunkDocument, type DocumentChunk } from './chunk'
+import { parsePdf } from './parse-pdf'
 
 const SOURCE = 'OTConst'
 const VERSION_DATE = '2024-01-01'
@@ -14,6 +15,7 @@ const SOURCE_URL =
 const LANGUAGE = 'fr'
 
 const DATA_FILE = resolve(process.cwd(), 'data', 'otconst.txt')
+const PDF_FILE = resolve(process.cwd(), 'data', 'otconst.pdf')
 
 /**
  * Generate realistic placeholder chunks representing OTConst structure.
@@ -181,26 +183,26 @@ function generatePlaceholderChunks(): DocumentChunk[] {
  * Reads from local file if available, otherwise returns placeholder data.
  */
 export async function parseOTConst(): Promise<DocumentChunk[]> {
+  if (existsSync(PDF_FILE)) {
+    return parsePdf({
+      pdfPath: PDF_FILE,
+      source: SOURCE,
+      versionDate: VERSION_DATE,
+      sourceUrl: SOURCE_URL,
+      language: LANGUAGE,
+      splitPattern: /(?=Art\.\s*\d+[a-z]?\b)/gi,
+    })
+  }
+
   if (existsSync(DATA_FILE)) {
-    console.log(`[OTConst] Reading from local file: ${DATA_FILE}`)
+    console.log(`[OTConst] Reading from local text file: ${DATA_FILE}`)
     const rawText = readFileSync(DATA_FILE, 'utf-8')
-
-    const chunks = chunkDocument(
-      rawText,
-      {
-        source: SOURCE,
-        versionDate: VERSION_DATE,
-        sourceUrl: SOURCE_URL,
-        language: LANGUAGE,
-      },
-      /(?=Art\.\s*\d+[a-z]?\b)/gi
-    )
-
-    console.log(`[OTConst] Parsed ${chunks.length} chunks from source file`)
+    const chunks = chunkDocument(rawText, { source: SOURCE, versionDate: VERSION_DATE, sourceUrl: SOURCE_URL, language: LANGUAGE }, /(?=Art\.\s*\d+[a-z]?\b)/gi)
+    console.log(`[OTConst] Parsed ${chunks.length} chunks from text file`)
     return chunks
   }
 
-  console.log(`[OTConst] Local file not found at ${DATA_FILE} — using placeholder data`)
+  console.log(`[OTConst] No PDF or text file found — using placeholder data`)
   const chunks = generatePlaceholderChunks()
   console.log(`[OTConst] Generated ${chunks.length} placeholder chunks`)
   return chunks

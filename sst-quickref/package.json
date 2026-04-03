@@ -1,0 +1,21 @@
+{
+  "name": "sst-quickref",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs",
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
+    "pdf-parse": "^2.4.5",
+    "unpdf": "^1.4.0"
+  }
+}

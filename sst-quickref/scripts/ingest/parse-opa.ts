@@ -6,6 +6,7 @@
 import { readFileSync, existsSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { chunkDocument, type DocumentChunk } from './chunk'
+import { parsePdf } from './parse-pdf'
 
 const SOURCE = 'OPA'
 const VERSION_DATE = '2024-01-01'
@@ -14,6 +15,7 @@ const SOURCE_URL =
 const LANGUAGE = 'fr'
 
 const DATA_FILE = resolve(process.cwd(), 'data', 'opa.txt')
+const PDF_FILE = resolve(process.cwd(), 'data', 'opa.pdf')
 
 /**
  * Generate realistic placeholder chunks for OPA Art. 62 and related provisions.
@@ -168,26 +170,26 @@ function generatePlaceholderChunks(): DocumentChunk[] {
  * Reads from local file if available, otherwise returns placeholder data.
  */
 export async function parseOPA(): Promise<DocumentChunk[]> {
+  if (existsSync(PDF_FILE)) {
+    return parsePdf({
+      pdfPath: PDF_FILE,
+      source: SOURCE,
+      versionDate: VERSION_DATE,
+      sourceUrl: SOURCE_URL,
+      language: LANGUAGE,
+      splitPattern: /(?=Art\.\s*\d+[a-z]?\b)/gi,
+    })
+  }
+
   if (existsSync(DATA_FILE)) {
-    console.log(`[OPA] Reading from local file: ${DATA_FILE}`)
+    console.log(`[OPA] Reading from local text file: ${DATA_FILE}`)
     const rawText = readFileSync(DATA_FILE, 'utf-8')
-
-    const chunks = chunkDocument(
-      rawText,
-      {
-        source: SOURCE,
-        versionDate: VERSION_DATE,
-        sourceUrl: SOURCE_URL,
-        language: LANGUAGE,
-      },
-      /(?=Art\.\s*\d+[a-z]?\b)/gi
-    )
-
-    console.log(`[OPA] Parsed ${chunks.length} chunks from source file`)
+    const chunks = chunkDocument(rawText, { source: SOURCE, versionDate: VERSION_DATE, sourceUrl: SOURCE_URL, language: LANGUAGE }, /(?=Art\.\s*\d+[a-z]?\b)/gi)
+    console.log(`[OPA] Parsed ${chunks.length} chunks from text file`)
     return chunks
   }
 
-  console.log(`[OPA] Local file not found at ${DATA_FILE} — using placeholder data`)
+  console.log(`[OPA] No PDF or text file found — using placeholder data`)
   const chunks = generatePlaceholderChunks()
   console.log(`[OPA] Generated ${chunks.length} placeholder chunks`)
   return chunks
