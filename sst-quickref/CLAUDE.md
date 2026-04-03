@@ -91,3 +91,6 @@ cd /tmp/sst-quickref/sst-quickref/frontend && npm install && npx vite build && c
 - 2026-04-03 : Déploiement production https://quickref.securionis.com (VPS Docker + Nginx + SSL)
 - 2026-04-03 : Accès admin Pro avec clé secrète, bypass rate limit
 - 2026-04-03 : Fix CORS, responsive mobile, suppression "[URL non fournie]" des citations
+- 2026-04-03 : System prompt langage naturel (questions informelles)
+- 2026-04-03 : Layout chat responsive (disclaimer inline, input toujours visible)
+- 2026-04-03 : Branding ©2026 - Securionis, section CTA Plan Pro masquée provisoirement

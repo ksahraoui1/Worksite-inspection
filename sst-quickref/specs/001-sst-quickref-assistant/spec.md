@@ -163,17 +163,19 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 
 ## Implementation Status (2026-04-03)
 
-### Deployed
+### Deployed (2026-04-03)
 - **Production URL** : https://quickref.securionis.com (VPS Hostinger, Docker + Nginx, SSL Let's Encrypt)
 - **7 sources réglementaires** : OTConst (160 chunks), CFST 6508 (44), OPA (207), OLT1 (252), OLT2 (188), OLT3 (48), OLT4 (72) — **971 chunks total**
 - **Pipeline RAG** : OpenAI text-embedding-3-small → pgvector (Supabase) → Claude Sonnet → citations sourcées
-- **Frontend** : Vue 3 + Vite + Tailwind, landing page, chat responsive, sources cliquables
+- **Frontend** : Vue 3 + Vite + Tailwind, landing page, chat responsive mobile/desktop, sources cliquables
 - **Backend** : 2 Supabase Edge Functions (quickref-query, quickref-feedback), 5 migrations SQL
-- **Rate limiting** : 10 req/jour freemium, accès illimité via clé admin Pro
+- **Rate limiting** : 10 req/jour freemium, accès illimité via clé admin Pro (header x-admin-key)
 - **Seuil de similarité** : 0.55 (calibré pour textes PDF réels)
+- **System prompt** : Langage naturel, comprend les questions informelles ("hauteur garde-corps ?", "casque obligatoire ?")
+- **Branding** : ©2026 - Securionis, section CTA Plan Pro masquée provisoirement
 
 ### Pending
-- Abonnement Stripe (Plan Pro CHF 29/mois)
+- Abonnement Stripe (Plan Pro CHF 29/mois) — section CTA prête, commentée dans LandingPage.vue
 - Intégration bouton "Texte applicable" dans Securionis Inspect
 - Sources additionnelles : SUVA Fiches-info, SECO Instructions
 - Multi-langue (allemand)
