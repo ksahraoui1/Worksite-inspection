@@ -76,13 +76,20 @@ cd /tmp/sst-quickref/sst-quickref/frontend && npm install && npx vite build && c
 - **Disclaimer** : Affiché sur chaque réponse, SST-QuickRef n'est pas un avis juridique
 - **Offline** : Cache IndexedDB des 50 dernières réponses
 
-## Security
+## Security (Audit 2026-04-04)
 
-- **CORS** : Headers Access-Control-Allow-Origin: * sur Edge Functions
-- **Admin key** : QUICKREF_ADMIN_KEY dans Supabase secrets, vérifié via header x-admin-key
-- **RLS** : Activée sur toutes les tables (documents_sst, quickref_queries, quickref_feedback)
-- **Anonymisation** : Regex suppression noms propres suisses avant logging
+- **CORS** : Restreint à quickref.securionis.com + localhost:5173 (plus de wildcard)
+- **Validation** : validate.ts — question max 500 chars, context sanitisé (alphanumeric), langue vérifiée
+- **Rate limiting** : rate-limit.ts — 10 req/jour par IP (in-memory), bypass admin via x-admin-key
+- **Admin key** : Comparaison constant-time (anti timing attack), QUICKREF_ADMIN_KEY dans Supabase secrets
+- **Anonymisation** : anonymize.ts — suppression PII (emails, téléphones, noms, adresses, entreprises suisses) avant logging
+- **Prompt injection** : Question encadrée par `<user_question>`, instruction de sécurité dans system prompt
+- **Client séparé** : anon key pour lectures (respecte RLS), service role uniquement pour INSERT logs
+- **RLS** : Activée sur toutes les tables (documents_sst SELECT all, quickref_queries INSERT service role, feedback INSERT auth)
 - **Intégrité** : SHA-256 hash sur chaque chunk pour traçabilité légale
+- **Nginx** : HSTS, CSP (base-uri, form-action), Permissions-Policy, X-Frame-Options DENY
+- **Source maps** : Désactivées en production
+- **Dépendance** : @supabase/supabase-js@2.49.4 pinnée
 
 ## Recent Changes
 
@@ -94,3 +101,4 @@ cd /tmp/sst-quickref/sst-quickref/frontend && npm install && npx vite build && c
 - 2026-04-03 : System prompt langage naturel (questions informelles)
 - 2026-04-03 : Layout chat responsive (disclaimer inline, input toujours visible)
 - 2026-04-03 : Branding ©2026 - Securionis, section CTA Plan Pro masquée provisoirement
+- 2026-04-04 : Audit sécurité complet — 22 vulnérabilités corrigées (CORS, rate-limit, anonymize, prompt injection, timing attack, HSTS, CSP)

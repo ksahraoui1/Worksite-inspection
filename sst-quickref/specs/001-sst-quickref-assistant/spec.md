@@ -163,16 +163,28 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 
 ## Implementation Status (2026-04-03)
 
-### Deployed (2026-04-03)
+### Deployed (2026-04-04)
 - **Production URL** : https://quickref.securionis.com (VPS Hostinger, Docker + Nginx, SSL Let's Encrypt)
 - **7 sources réglementaires** : OTConst (160 chunks), CFST 6508 (44), OPA (207), OLT1 (252), OLT2 (188), OLT3 (48), OLT4 (72) — **971 chunks total**
 - **Pipeline RAG** : OpenAI text-embedding-3-small → pgvector (Supabase) → Claude Sonnet → citations sourcées
 - **Frontend** : Vue 3 + Vite + Tailwind, landing page, chat responsive mobile/desktop, sources cliquables
 - **Backend** : 2 Supabase Edge Functions (quickref-query, quickref-feedback), 5 migrations SQL
-- **Rate limiting** : 10 req/jour freemium, accès illimité via clé admin Pro (header x-admin-key)
-- **Seuil de similarité** : 0.55 (calibré pour textes PDF réels)
+- **Rate limiting** : 10 req/jour freemium actif (IP-based), accès illimité via clé admin Pro (header x-admin-key)
+- **Seuil de similarité** : 0.55 (calibré pour textes PDF réels, filtré au niveau RPC)
 - **System prompt** : Langage naturel, comprend les questions informelles ("hauteur garde-corps ?", "casque obligatoire ?")
 - **Branding** : ©2026 - Securionis, section CTA Plan Pro masquée provisoirement
+
+### Security (2026-04-04 — Audit complet)
+- **Modules sécurité actifs** : validate.ts (validation input), rate-limit.ts (10 req/jour IP), anonymize.ts (PII removal avant logging)
+- **CORS restreint** : uniquement quickref.securionis.com et localhost:5173
+- **Prompt injection** : question encadrée par délimiteurs `<user_question>`, instruction de sécurité dans le system prompt
+- **Timing attack** : comparaison constant-time sur la clé admin
+- **Client séparé** : anon key pour lectures RLS, service role uniquement pour INSERT logs
+- **Anonymisation nLPD** : emails, téléphones, noms, adresses, entreprises supprimés avant logging
+- **Nginx hardening** : HSTS, CSP complété (base-uri, form-action), Permissions-Policy, X-Frame-Options DENY
+- **Source maps** désactivées en production
+- **Dépendance pinnée** : @supabase/supabase-js@2.49.4
+- **SECURITY DEFINER** avec search_path restreint sur fonctions SQL
 
 ### Pending
 - Abonnement Stripe (Plan Pro CHF 29/mois) — section CTA prête, commentée dans LandingPage.vue
@@ -180,3 +192,4 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 - Sources additionnelles : SUVA Fiches-info, SECO Instructions
 - Multi-langue (allemand)
 - Benchmark formel sur 50 questions de référence
+- Nginx hardening à redéployer sur le VPS (deploy/nginx.conf mis à jour)
