@@ -15,6 +15,7 @@ CREATE OR REPLACE FUNCTION cleanup_old_queries()
 RETURNS INTEGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
   deleted_count INTEGER;
