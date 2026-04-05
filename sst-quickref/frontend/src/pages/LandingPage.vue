@@ -1,13 +1,20 @@
 <script setup lang="ts">
 /**
- * T033: Page d'accueil — hero, démo chat, CTA Plan Pro
+ * T033: Page d'accueil — hero, démo chat, CTA Plan Pro (Stripe)
  */
+import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import ChatWindow from '@/components/ChatWindow.vue'
 import { useChat } from '@/composables/useChat'
+import { createCheckoutSession, setSubscriberEmail } from '@/services/quickref-api'
 
 const router = useRouter()
 const { messages, loading, sendMessage } = useChat()
+
+const showSubscribeModal = ref(false)
+const subscribeEmail = ref('')
+const subscribeLoading = ref(false)
+const subscribeError = ref('')
 
 function handleSend(question: string) {
   sendMessage(question)
@@ -15,6 +22,25 @@ function handleSend(question: string) {
 
 function goToChat() {
   router.push('/chat')
+}
+
+async function handleSubscribe() {
+  if (!subscribeEmail.value || !subscribeEmail.value.includes('@')) {
+    subscribeError.value = 'Veuillez entrer un email valide.'
+    return
+  }
+
+  subscribeLoading.value = true
+  subscribeError.value = ''
+
+  try {
+    const url = await createCheckoutSession(subscribeEmail.value)
+    setSubscriberEmail(subscribeEmail.value)
+    window.location.href = url
+  } catch (err) {
+    subscribeError.value = 'Erreur lors de la création du paiement. Réessayez.'
+    subscribeLoading.value = false
+  }
 }
 </script>
 
@@ -119,24 +145,62 @@ function goToChat() {
       </div>
     </section>
 
-    <!-- CTA (masqué provisoirement — réactiver avec Stripe)
+    <!-- CTA Plan Pro (Stripe) -->
     <section class="py-12 md:py-16 bg-teal-600 text-white">
       <div class="max-w-3xl mx-auto px-4 text-center">
         <h2 class="text-2xl md:text-3xl font-bold mb-3">
           Accès illimité pour les professionnels
         </h2>
         <p class="text-teal-100 mb-8 max-w-xl mx-auto">
-          Le Plan Pro offre un nombre illimité de requêtes, un historique complet et un accès prioritaire aux mises à jour réglementaires.
+          Le Plan Pro offre un nombre illimité de requêtes et un accès prioritaire aux mises à jour réglementaires.
         </p>
         <button
           type="button"
           class="min-h-[44px] min-w-[44px] inline-flex items-center px-8 py-3 rounded-xl bg-white text-teal-700 font-bold text-lg hover:bg-teal-50 transition-colors shadow-lg"
+          @click="showSubscribeModal = true"
         >
           Plan Pro — CHF 29/mois
         </button>
       </div>
     </section>
-    -->
+
+    <!-- Subscribe modal -->
+    <div
+      v-if="showSubscribeModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      @click.self="showSubscribeModal = false"
+    >
+      <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+        <h3 class="text-lg font-bold text-gray-900 mb-2">Plan Pro — CHF 29/mois</h3>
+        <p class="text-sm text-gray-500 mb-4">Entrez votre email pour accéder au paiement sécurisé via Stripe.</p>
+        <input
+          v-model="subscribeEmail"
+          type="email"
+          placeholder="votre@email.com"
+          class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 mb-2"
+          @keydown.enter="handleSubscribe"
+        />
+        <p v-if="subscribeError" class="text-sm text-red-600 mb-2">{{ subscribeError }}</p>
+        <div class="flex gap-3 justify-end mt-4">
+          <button
+            type="button"
+            class="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100"
+            @click="showSubscribeModal = false"
+          >
+            Annuler
+          </button>
+          <button
+            type="button"
+            :disabled="subscribeLoading"
+            class="px-6 py-2 rounded-lg text-sm bg-teal-600 text-white font-medium hover:bg-teal-700 disabled:opacity-50"
+            @click="handleSubscribe"
+          >
+            {{ subscribeLoading ? 'Redirection...' : 'Payer avec Stripe' }}
+          </button>
+        </div>
+        <p class="text-xs text-gray-400 mt-3 text-center">Paiement sécurisé. Annulation à tout moment.</p>
+      </div>
+    </div>
 
     <!-- Footer -->
     <footer class="bg-gray-900 text-gray-400 py-8">

@@ -44,6 +44,10 @@ function buildHeaders(): Record<string, string> {
   if (adminKey) {
     headers['x-admin-key'] = adminKey
   }
+  const subscriberEmail = getSubscriberEmail()
+  if (subscriberEmail) {
+    headers['x-subscriber-email'] = subscriberEmail
+  }
   return headers
 }
 
@@ -111,4 +115,34 @@ export class ApiError extends Error {
     this.name = 'ApiError'
     this.code = code
   }
+}
+
+// Subscriber email management
+export function getSubscriberEmail(): string | null {
+  return localStorage.getItem('quickref_subscriber_email')
+}
+
+export function setSubscriberEmail(email: string): void {
+  localStorage.setItem('quickref_subscriber_email', email)
+}
+
+export function clearSubscriberEmail(): void {
+  localStorage.removeItem('quickref_subscriber_email')
+}
+
+// Stripe Checkout
+export async function createCheckoutSession(email: string): Promise<string> {
+  const response = await fetch(`${API_BASE}/stripe-checkout`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify({ email }),
+  })
+
+  if (!response.ok) {
+    const error = await response.json()
+    throw new ApiError('checkout_error', error.error || 'Erreur lors du paiement')
+  }
+
+  const data = await response.json()
+  return data.url
 }

@@ -58,7 +58,7 @@ function getCorsHeaders(req: Request): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info, x-admin-key',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info, x-admin-key, x-subscriber-email',
     'Vary': 'Origin',
   }
 }
@@ -108,12 +108,34 @@ Deno.serve(async (req: Request) => {
     const expectedKey = Deno.env.get('QUICKREF_ADMIN_KEY') ?? ''
     const isAdmin = adminKey.length > 0 && expectedKey.length > 0 && safeCompare(adminKey, expectedKey)
 
+    // === SUBSCRIBER CHECK (Stripe Pro) ===
+    const subscriberEmail = req.headers.get('x-subscriber-email') ?? ''
+    let isSubscriber = false
+    if (subscriberEmail && !isAdmin) {
+      const supabaseCheck = createClient(
+        Deno.env.get('SUPABASE_URL')!,
+        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+      )
+      const { data: sub } = await supabaseCheck
+        .from('subscriptions')
+        .select('status, current_period_end')
+        .eq('email', subscriberEmail)
+        .eq('status', 'active')
+        .single()
+
+      if (sub && new Date(sub.current_period_end) > new Date()) {
+        isSubscriber = true
+      }
+    }
+
+    const isPro = isAdmin || isSubscriber
+
     // === RATE LIMITING (module rate-limit.ts) ===
     const clientIp = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
       ?? req.headers.get('x-real-ip')
       ?? 'unknown'
 
-    const rateCheck = checkRateLimit(clientIp, isAdmin)
+    const rateCheck = checkRateLimit(clientIp, isPro)
     if (!rateCheck.allowed) {
       return jsonResponse({
         error: 'rate_limit_exceeded',
@@ -163,7 +185,7 @@ Deno.serve(async (req: Request) => {
 
     // === ANONYMIZE question before logging ===
     const anonymizedQuestion = anonymizeQuestion(body.question)
-    const userType = isAdmin ? 'admin' : 'anonymous'
+    const userType = isAdmin ? 'admin' : isSubscriber ? 'subscriber' : 'anonymous'
 
     // Check similarity threshold — refuse if no matches above threshold
     if (topMatches.length === 0) {
