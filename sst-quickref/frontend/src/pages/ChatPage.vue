@@ -12,16 +12,31 @@ import DisclaimerBanner from '@/components/DisclaimerBanner.vue'
 import { useChat } from '@/composables/useChat'
 import { useOnlineStatus } from '@/composables/useOnlineStatus'
 import { useOfflineCache } from '@/composables/useOfflineCache'
-import { getAdminKey, setAdminKey, clearAdminKey } from '@/services/quickref-api'
+import { getAdminKey, setAdminKey, clearAdminKey, getSubscriberEmail } from '@/services/quickref-api'
+import { useRoute } from 'vue-router'
 import type { QuickRefSource } from '@/types'
 
 const router = useRouter()
+const route = useRoute()
 const { messages, loading, error, rateLimit, sendMessage, clearChat } = useChat()
 const { isOnline } = useOnlineStatus()
 const { saveToCache, loadFromCache, clearCache } = useOfflineCache()
 
+// Detect subscription success from Stripe redirect
+const subscriptionSuccess = ref(false)
+
+// Pro status: admin key OR active subscriber
+const isPro = computed(() => isAdmin.value || !!getSubscriberEmail())
+
 // Load cached messages on mount
 onMounted(async () => {
+  // Check for Stripe redirect
+  if (route.query.subscription === 'success') {
+    subscriptionSuccess.value = true
+    // Remove query param from URL
+    router.replace({ path: '/chat' })
+  }
+
   const cached = await loadFromCache()
   if (cached.length > 0) {
     messages.value = cached
@@ -109,17 +124,17 @@ function saveAdminKey() {
         </div>
 
         <div class="flex items-center gap-2">
-          <!-- Rate limit info -->
+          <!-- Rate limit info (hidden for Pro users) -->
           <span
-            v-if="rateLimit.remaining.value !== null && !rateLimit.isLimited.value"
+            v-if="!isPro && rateLimit.remaining.value !== null && !rateLimit.isLimited.value"
             class="text-xs text-gray-400"
           >
             {{ rateLimit.remaining.value }} requêtes restantes
           </span>
 
-          <!-- Admin badge -->
+          <!-- Pro badge -->
           <span
-            v-if="isAdmin"
+            v-if="isPro"
             class="text-xs bg-teal-600 text-white px-2 py-1 rounded-full font-medium"
           >
             Pro
@@ -151,6 +166,24 @@ function saveAdminKey() {
         </div>
       </div>
     </header>
+
+    <!-- Subscription success banner -->
+    <div
+      v-if="subscriptionSuccess"
+      class="bg-teal-600 text-white text-center text-sm py-3 px-4 font-medium shrink-0 flex items-center justify-center gap-2"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      Bienvenue dans le Plan Pro ! Vous avez un accès illimité.
+      <button
+        type="button"
+        class="ml-2 underline text-teal-100 hover:text-white"
+        @click="subscriptionSuccess = false"
+      >
+        Fermer
+      </button>
+    </div>
 
     <!-- Offline banner -->
     <div
