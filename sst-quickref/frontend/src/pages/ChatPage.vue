@@ -13,6 +13,7 @@ import { useChat } from '@/composables/useChat'
 import { useOnlineStatus } from '@/composables/useOnlineStatus'
 import { useOfflineCache } from '@/composables/useOfflineCache'
 import { getAdminKey, setAdminKey, clearAdminKey, getSubscriberEmail } from '@/services/quickref-api'
+import { useAuth } from '@/composables/useAuth'
 import { useRoute } from 'vue-router'
 import type { QuickRefSource } from '@/types'
 
@@ -22,10 +23,18 @@ const { messages, loading, error, rateLimit, sendMessage, clearChat } = useChat(
 const { isOnline } = useOnlineStatus()
 const { saveToCache, loadFromCache, clearCache } = useOfflineCache()
 
+// Auth
+const { isLoggedIn, email: authEmail, sendMagicLink, logout } = useAuth()
+const showLoginModal = ref(false)
+const loginEmail = ref('')
+const loginLoading = ref(false)
+const loginError = ref('')
+const loginSent = ref(false)
+
 // Detect subscription success from Stripe redirect
 const subscriptionSuccess = ref(false)
 
-// Pro status: admin key OR active subscriber
+// Pro status: admin key OR logged-in subscriber
 const isPro = computed(() => isAdmin.value || !!getSubscriberEmail())
 
 // Load cached messages on mount
@@ -87,6 +96,33 @@ function openAdminModal() {
   showAdminModal.value = true
 }
 
+async function handleLogin() {
+  if (!loginEmail.value || !loginEmail.value.includes('@')) {
+    loginError.value = 'Veuillez entrer un email valide.'
+    return
+  }
+  loginLoading.value = true
+  loginError.value = ''
+  const { error } = await sendMagicLink(loginEmail.value)
+  loginLoading.value = false
+  if (error) {
+    loginError.value = error
+  } else {
+    loginSent.value = true
+  }
+}
+
+function openLoginModal() {
+  loginEmail.value = ''
+  loginError.value = ''
+  loginSent.value = false
+  showLoginModal.value = true
+}
+
+async function handleLogout() {
+  await logout()
+}
+
 function saveAdminKey() {
   if (adminKeyInput.value.trim()) {
     setAdminKey(adminKeyInput.value.trim())
@@ -131,6 +167,33 @@ function saveAdminKey() {
           >
             {{ rateLimit.remaining.value }} requêtes restantes
           </span>
+
+          <!-- Login / User info -->
+          <button
+            v-if="!isLoggedIn"
+            type="button"
+            class="min-w-[44px] min-h-[44px] flex items-center justify-center gap-1.5 rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors px-3"
+            @click="openLoginModal"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0" />
+            </svg>
+            <span class="text-xs hidden md:inline">Se connecter</span>
+          </button>
+
+          <template v-else>
+            <span class="text-xs text-gray-400 hidden md:inline">{{ authEmail }}</span>
+            <button
+              type="button"
+              class="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+              title="Se déconnecter"
+              @click="handleLogout"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+              </svg>
+            </button>
+          </template>
 
           <!-- Pro badge -->
           <span
@@ -267,6 +330,65 @@ function saveAdminKey() {
 
     <!-- Disclaimer -->
     <DisclaimerBanner />
+
+    <!-- Login modal (magic link) -->
+    <div
+      v-if="showLoginModal"
+      class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+      @click.self="showLoginModal = false"
+    >
+      <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
+        <template v-if="!loginSent">
+          <h3 class="text-lg font-bold text-gray-900 mb-2">Se connecter</h3>
+          <p class="text-sm text-gray-500 mb-4">Entrez votre email — vous recevrez un lien de connexion instantané.</p>
+          <input
+            v-model="loginEmail"
+            type="email"
+            placeholder="votre@email.com"
+            class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-teal-500 mb-2"
+            @keydown.enter="handleLogin"
+          />
+          <p v-if="loginError" class="text-sm text-red-600 mb-2">{{ loginError }}</p>
+          <div class="flex gap-3 justify-end mt-4">
+            <button
+              type="button"
+              class="px-4 py-2 rounded-lg text-sm text-gray-600 hover:bg-gray-100"
+              @click="showLoginModal = false"
+            >
+              Annuler
+            </button>
+            <button
+              type="button"
+              :disabled="loginLoading"
+              class="px-6 py-2 rounded-lg text-sm bg-teal-600 text-white font-medium hover:bg-teal-700 disabled:opacity-50"
+              @click="handleLogin"
+            >
+              {{ loginLoading ? 'Envoi...' : 'Recevoir le lien' }}
+            </button>
+          </div>
+        </template>
+        <template v-else>
+          <div class="text-center py-4">
+            <div class="w-16 h-16 rounded-full bg-teal-100 flex items-center justify-center mx-auto mb-4">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-bold text-gray-900 mb-2">Vérifiez vos emails</h3>
+            <p class="text-sm text-gray-500 mb-4">
+              Un lien de connexion a été envoyé à <strong>{{ loginEmail }}</strong>. Cliquez dessus pour vous connecter.
+            </p>
+            <button
+              type="button"
+              class="px-6 py-2 rounded-lg text-sm bg-gray-100 text-gray-700 hover:bg-gray-200"
+              @click="showLoginModal = false"
+            >
+              Fermer
+            </button>
+          </div>
+        </template>
+      </div>
+    </div>
 
     <!-- Admin key modal -->
     <div
