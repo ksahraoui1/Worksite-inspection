@@ -4,7 +4,7 @@
 
 import { ref } from 'vue'
 import type { ChatMessage } from '@/types'
-import { sendQuestion, RateLimitError } from '@/services/quickref-api'
+import { sendQuestion, RateLimitError, ApiError } from '@/services/quickref-api'
 import { useRateLimit } from './useRateLimit'
 
 function generateId(): string {
@@ -15,6 +15,7 @@ export function useChat() {
   const messages = ref<ChatMessage[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const sessionRevoked = ref(false)
   const rateLimit = useRateLimit()
 
   async function sendMessage(question: string) {
@@ -56,6 +57,9 @@ export function useChat() {
       if (err instanceof RateLimitError) {
         rateLimit.setLimited(err.retryAfter)
         error.value = rateLimit.upgradeMessage.value
+      } else if (err instanceof ApiError && err.code === 'session_revoked') {
+        sessionRevoked.value = true
+        error.value = err.message
       } else if (err instanceof Error) {
         error.value = err.message
       } else {
@@ -86,6 +90,7 @@ export function useChat() {
     messages,
     loading,
     error,
+    sessionRevoked,
     rateLimit,
     sendMessage,
     clearChat,

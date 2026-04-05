@@ -19,7 +19,7 @@ import type { QuickRefSource } from '@/types'
 
 const router = useRouter()
 const route = useRoute()
-const { messages, loading, error, rateLimit, sendMessage, clearChat } = useChat()
+const { messages, loading, error, sessionRevoked: chatSessionRevoked, rateLimit, sendMessage, clearChat } = useChat()
 const { isOnline } = useOnlineStatus()
 const { saveToCache, loadFromCache, clearCache } = useOfflineCache()
 
@@ -245,6 +245,21 @@ function saveAdminKey() {
         @click="subscriptionSuccess = false"
       >
         Fermer
+      </button>
+    </div>
+
+    <!-- Session revoked banner -->
+    <div
+      v-if="chatSessionRevoked"
+      class="bg-red-600 text-white text-center text-sm py-3 px-4 font-medium shrink-0"
+    >
+      Votre session a été déconnectée car une connexion a été ouverte sur un autre appareil.
+      <button
+        type="button"
+        class="ml-2 underline hover:text-red-100"
+        @click="openLoginModal"
+      >
+        Se reconnecter
       </button>
     </div>
 

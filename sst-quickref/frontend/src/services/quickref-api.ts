@@ -48,6 +48,10 @@ function buildHeaders(): Record<string, string> {
   if (subscriberEmail) {
     headers['x-subscriber-email'] = subscriberEmail
   }
+  const sessionId = localStorage.getItem('quickref_session_id')
+  if (sessionId) {
+    headers['x-session-id'] = sessionId
+  }
   return headers
 }
 

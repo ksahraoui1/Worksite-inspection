@@ -58,7 +58,7 @@ function getCorsHeaders(req: Request): Record<string, string> {
   return {
     'Access-Control-Allow-Origin': allowedOrigin,
     'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info, x-admin-key, x-subscriber-email',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, apikey, x-client-info, x-admin-key, x-subscriber-email, x-session-id',
     'Vary': 'Origin',
   }
 }
@@ -108,9 +108,12 @@ Deno.serve(async (req: Request) => {
     const expectedKey = Deno.env.get('QUICKREF_ADMIN_KEY') ?? ''
     const isAdmin = adminKey.length > 0 && expectedKey.length > 0 && safeCompare(adminKey, expectedKey)
 
-    // === SUBSCRIBER CHECK (Stripe Pro) ===
+    // === SUBSCRIBER CHECK (Stripe Pro + session control) ===
     const subscriberEmail = req.headers.get('x-subscriber-email') ?? ''
+    const sessionId = req.headers.get('x-session-id') ?? ''
     let isSubscriber = false
+    let sessionRevoked = false
+
     if (subscriberEmail && !isAdmin) {
       const supabaseCheck = createClient(
         Deno.env.get('SUPABASE_URL')!,
@@ -118,14 +121,27 @@ Deno.serve(async (req: Request) => {
       )
       const { data: sub } = await supabaseCheck
         .from('subscriptions')
-        .select('status, current_period_end')
+        .select('status, current_period_end, active_session_id')
         .eq('email', subscriberEmail)
         .eq('status', 'active')
         .single()
 
       if (sub && new Date(sub.current_period_end) > new Date()) {
-        isSubscriber = true
+        // Vérifier que le session_id correspond (1 seule connexion simultanée)
+        if (sub.active_session_id && sessionId && sub.active_session_id !== sessionId) {
+          sessionRevoked = true
+        } else {
+          isSubscriber = true
+        }
       }
+    }
+
+    // Session révoquée → une autre connexion a pris le relais
+    if (sessionRevoked) {
+      return jsonResponse({
+        error: 'session_revoked',
+        message: 'Votre session a été déconnectée car une connexion a été ouverte sur un autre appareil.',
+      }, corsHeaders, 403)
     }
 
     const isPro = isAdmin || isSubscriber
