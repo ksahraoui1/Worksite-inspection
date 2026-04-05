@@ -163,16 +163,20 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 
 ## Implementation Status (2026-04-03)
 
-### Deployed (2026-04-04)
+### Deployed (2026-04-05)
 - **Production URL** : https://quickref.securionis.com (VPS Hostinger, Docker + Nginx, SSL Let's Encrypt)
 - **7 sources réglementaires** : OTConst (160 chunks), CFST 6508 (44), OPA (207), OLT1 (252), OLT2 (188), OLT3 (48), OLT4 (72) — **971 chunks total**
 - **Pipeline RAG** : OpenAI text-embedding-3-small → pgvector (Supabase) → Claude Sonnet → citations sourcées
 - **Frontend** : Vue 3 + Vite + Tailwind, landing page, chat responsive mobile/desktop, sources cliquables
-- **Backend** : 2 Supabase Edge Functions (quickref-query, quickref-feedback), 5 migrations SQL
-- **Rate limiting** : 10 req/jour freemium actif (IP-based), accès illimité via clé admin Pro (header x-admin-key)
+- **Backend** : 5 Supabase Edge Functions (quickref-query, quickref-feedback, stripe-checkout, stripe-webhook, session-update), 7 migrations SQL
+- **Abonnement Stripe** : Plan Pro CHF 29/mois live, modale email → Stripe Checkout → webhook activation
+- **Authentification** : Magic link via Supabase Auth (email → lien de connexion → connecté)
+- **Session unique** : 1 seul appareil simultané par abonné (session_id vérifié, bannière si révoquée)
+- **Rate limiting** : 10 req/jour freemium (IP), illimité pour abonnés Pro + admin
+- **Badge Pro** : Visible pour abonnés actifs et admin, compteur requêtes masqué
 - **Seuil de similarité** : 0.55 (calibré pour textes PDF réels, filtré au niveau RPC)
-- **System prompt** : Langage naturel, comprend les questions informelles ("hauteur garde-corps ?", "casque obligatoire ?")
-- **Branding** : ©2026 - Securionis, section CTA Plan Pro masquée provisoirement
+- **System prompt** : Langage naturel, comprend les questions informelles
+- **Branding** : ©2026 - Securionis
 
 ### Security (2026-04-04 — Audit complet)
 - **Modules sécurité actifs** : validate.ts (validation input), rate-limit.ts (10 req/jour IP), anonymize.ts (PII removal avant logging)
@@ -187,9 +191,9 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 - **SECURITY DEFINER** avec search_path restreint sur fonctions SQL
 
 ### Pending
-- Abonnement Stripe (Plan Pro CHF 29/mois) — section CTA prête, commentée dans LandingPage.vue
 - Intégration bouton "Texte applicable" dans Securionis Inspect
 - Sources additionnelles : SUVA Fiches-info, SECO Instructions
 - Multi-langue (allemand)
 - Benchmark formel sur 50 questions de référence
 - Nginx hardening à redéployer sur le VPS (deploy/nginx.conf mis à jour)
+- Portail Stripe pour gérer/annuler l'abonnement

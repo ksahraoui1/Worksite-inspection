@@ -102,3 +102,6 @@ cd /tmp/sst-quickref/sst-quickref/frontend && npm install && npx vite build && c
 - 2026-04-03 : Layout chat responsive (disclaimer inline, input toujours visible)
 - 2026-04-03 : Branding ©2026 - Securionis, section CTA Plan Pro masquée provisoirement
 - 2026-04-04 : Audit sécurité complet — 22 vulnérabilités corrigées (CORS, rate-limit, anonymize, prompt injection, timing attack, HSTS, CSP)
+- 2026-04-05 : Abonnement Stripe Plan Pro CHF 29/mois (checkout, webhook, table subscriptions)
+- 2026-04-05 : Authentification magic link via Supabase Auth
+- 2026-04-05 : Session unique par abonné (1 seul appareil simultané, bannière si révoquée)
