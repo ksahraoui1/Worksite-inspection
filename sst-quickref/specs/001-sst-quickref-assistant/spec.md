@@ -110,7 +110,7 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 - **FR-001**: Le système DOIT permettre à un utilisateur de poser une question en français sur la réglementation SST suisse et recevoir une réponse sourcée.
 - **FR-002**: Chaque réponse DOIT citer la loi source, l'article exact, la date de version du texte et un lien vers le document officiel.
 - **FR-003**: Le système DOIT afficher un disclaimer légal sur chaque réponse indiquant qu'il ne s'agit pas d'un avis juridique.
-- **FR-004**: Le système DOIT couvrir l'intégralité des textes réglementaires SST Priorité 1 : OTConst, CFST 6508, OPA, OLT1, OLT2, OLT3, OLT4.
+- **FR-004**: Le système DOIT couvrir l'intégralité des textes réglementaires SST Priorité 1 (OTConst, CFST 6508, OPA, OLT1-4) et Priorité 2 : 6 lois (LAA, LChim, LRS, LEg, LSPS, LIE), 11 ordonnances (OLT5, OChim, OPB, ORRChim, OICF, OIBT, OPair, OSPS, OMAle, OSEC, OPI), 14 directives CFST (6501, 6503, 1825, 6507, 6510, 6511, 6512, 6518, 2134, 6516, 6066, 6091) + ESTI 407, et 2 articles de code (CO art. 328, CP art. 229). Soit 39 sources au total.
 - **FR-005**: Le système DOIT refuser de répondre lorsque le score de pertinence des chunks retournés est inférieur au seuil défini, et afficher "Aucun texte réglementaire trouvé" avec suggestion de reformuler.
 - **FR-006**: Le système DOIT supporter une requête contextuelle depuis Securionis Inspect avec transmission automatique du thème SST actif.
 - **FR-007**: Le système DOIT exposer un point d'entrée de requête (endpoint POST /api/quickref/query) acceptant une question, un contexte optionnel (thème, catégorie) et une langue, authentifié par JWT Supabase.
@@ -141,7 +141,7 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 
 - **SC-001**: Les utilisateurs obtiennent une réponse à leur question réglementaire en moins de 3 secondes.
 - **SC-002**: Plus de 95 % des réponses citent correctement la référence législative vérifiable (article, version, source).
-- **SC-003**: 100 % des textes SST suisses Priorité 1 (OTConst, CFST 6508, OPA, OLT1, OLT2, OLT3, OLT4) sont couverts et consultables — **ATTEINT : 7 sources, 971 chunks, 198 pages**.
+- **SC-003**: 100 % des textes SST suisses Priorité 1 et Priorité 2 sont couverts et consultables — **ATTEINT : 39 sources, 4480 chunks** (étendu depuis 7 sources / 971 chunks). 3 directives CFST encore manquantes : 1907, 2135, 2314.
 - **SC-004**: Les inspecteurs de terrain valident la pertinence des réponses sur un jeu de 50 questions de référence avec un taux de satisfaction supérieur à 80 %.
 - **SC-005**: Le système supporte 1000 requêtes par mois sans dégradation de performance perceptible.
 - **SC-006**: Le taux d'adoption atteint l'intégration active dans Securionis Inspect d'ici T3 2025.
@@ -157,7 +157,7 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 - Le disclaimer légal est une mesure de protection nécessaire et suffisante en l'absence de validation par un juriste SST externe (validation recommandée avant Phase 3).
 - La politique de rétention des logs est fixée à 90 jours maximum, avec suppression automatique ensuite.
 - L'authentification pour les utilisateurs Securionis repose sur le système JWT existant. L'accès freemium sur la landing page fonctionne sans authentification avec rate limiting.
-- Les textes réglementaires Priorité 2 (SECO, SUVA Fiches-info) et Priorité 3 (SIA 118, nLPD, AEAI) sont hors périmètre initial et seront ingérés dans les phases ultérieures.
+- Les textes réglementaires Priorité 2 (lois, ordonnances, directives CFST) sont désormais intégrés (32 sources additionnelles, 4480 chunks). 3 directives CFST restent manquantes (1907, 2135, 2314). Les textes Priorité 3 (SIA 118, nLPD, AEAI, SUVA Fiches-info, SECO Instructions) sont hors périmètre initial et seront ingérés dans les phases ultérieures.
 - Le périmètre couvre les Phases 0, 1 et 2 du rapport de développement. La Phase 3 (multi-langue, export PDF, tableau de bord admin) reste hors périmètre.
 - Les métriques d'observabilité (temps de réponse, taux de citations, volume, erreurs) sont collectées en continu pour piloter la qualité du service.
 
@@ -165,7 +165,7 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 
 ### Deployed (2026-04-05)
 - **Production URL** : https://quickref.securionis.com (VPS Hostinger, Docker + Nginx, SSL Let's Encrypt)
-- **7 sources réglementaires** : OTConst (160 chunks), CFST 6508 (44), OPA (207), OLT1 (252), OLT2 (188), OLT3 (48), OLT4 (72) — **971 chunks total**
+- **39 sources réglementaires** : 7 sources initiales (OTConst, CFST 6508, OPA, OLT1-4) + 32 nouvelles sources — 6 lois (LAA, LChim, LRS, LEg, LSPS, LIE), 11 ordonnances (OLT5, OChim, OPB, ORRChim, OICF, OIBT, OPair, OSPS, OMAle, OSEC, OPI), 14 directives CFST (6501, 6503, 1825, 6507, 6510, 6511, 6512, 6518, 2134, 6516, 6066, 6091) + ESTI 407, 2 articles de code (CO art. 328, CP art. 229) — **4480 chunks total**
 - **Pipeline RAG** : OpenAI text-embedding-3-small → pgvector (Supabase) → Claude Sonnet → citations sourcées
 - **Frontend** : Vue 3 + Vite + Tailwind, landing page, chat responsive mobile/desktop, sources cliquables
 - **Backend** : 5 Supabase Edge Functions (quickref-query, quickref-feedback, stripe-checkout, stripe-webhook, session-update), 7 migrations SQL
