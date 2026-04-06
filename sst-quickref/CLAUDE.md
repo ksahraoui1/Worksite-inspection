@@ -1,13 +1,13 @@
 # SST-QuickRef Development Guidelines
 
-Last updated: 2026-04-03
+Last updated: 2026-04-06
 
 ## Production
 
 - **URL** : https://quickref.securionis.com
 - **Hébergement** : VPS Hostinger (Docker + Nginx), SSL Let's Encrypt
 - **Backend** : Supabase Edge Functions (projet wixcqdyoqxdgqeqqmfqu)
-- **Corpus** : 7 sources, 971 chunks, 198 pages de textes réglementaires suisses
+- **Corpus** : 39 sources, 4480 chunks de textes réglementaires suisses (3 directives CFST manquantes : 1907, 2135, 2314)
 
 ## Active Technologies
 
@@ -34,7 +34,10 @@ sst-quickref/
 │   │   └── quickref-feedback/   # Edge Function feedback (pouce haut/bas)
 │   └── migrations/              # 5 migrations SQL (pgvector, tables, RPC, RLS, retention)
 ├── scripts/ingest/              # Pipeline d'ingestion PDF → chunks → embeddings → Supabase
+│   ├── documents-registry.ts    # Registre des 39 sources (métadonnées, URLs fedlex)
+│   ├── download-all.ts          # Téléchargement auto via SPARQL fedlex API
 │   ├── parse-otconst.ts         # + parse-cfst6508.ts, parse-opa.ts, parse-olt1-4.ts
+│   ├── parse-generic.ts         # Parser générique (lois, ordonnances, directives)
 │   ├── parse-pdf.ts             # Utilitaire commun extraction PDF (unpdf)
 │   ├── chunk.ts                 # Découpage sémantique par article (max 512 tokens)
 │   ├── embed.ts                 # OpenAI text-embedding-3-small

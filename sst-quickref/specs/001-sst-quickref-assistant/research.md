@@ -6,7 +6,7 @@
 ## 1. Modèle d'embedding
 
 **Decision**: text-embedding-3-small (OpenAI)  
-**Rationale**: Coût optimal (~CHF 0.0001/requête), dimension 1536 suffisante pour un corpus réglementaire de ~450 chunks. La précision est adéquate pour des textes juridiques structurés en français. Le rapport de développement confirme ce choix.  
+**Rationale**: Coût optimal (~CHF 0.0001/requête), dimension 1536 suffisante pour un corpus réglementaire de ~4480 chunks (39 sources). La précision est adéquate pour des textes juridiques structurés en français. Le rapport de développement confirme ce choix.  
 **Alternatives considered**:
 - text-embedding-3-large : meilleure précision mais coût 5x supérieur, non justifié pour un corpus restreint et bien structuré
 - Embedding local (e.g., sentence-transformers) : pas d'infrastructure GPU disponible, complexité opérationnelle accrue

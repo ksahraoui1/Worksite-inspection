@@ -14,7 +14,7 @@ Stocke les chunks de textes réglementaires avec leurs embeddings vectoriels.
 | id | UUID | PK, DEFAULT gen_random_uuid() | Identifiant unique du chunk |
 | content | TEXT | NOT NULL | Texte brut du chunk réglementaire |
 | embedding | vector(1536) | NOT NULL | Vecteur text-embedding-3-small |
-| source | TEXT | NOT NULL | Source législative (ex: 'OTConst', 'CFST_6508', 'OPA') |
+| source | TEXT | NOT NULL | Source législative (ex: 'OTConst', 'CFST_6508', 'OPA', 'LAA', 'OLT5', 'CFST_6501', 'CO_328', 'CP_229') |
 | article | TEXT | | Référence de l'article (ex: 'Art. 47', 'Chap. 3 §2') |
 | version_date | DATE | NOT NULL | Date de la version du texte source |
 | source_url | TEXT | | URL officielle du document source |
@@ -93,6 +93,6 @@ quickref_queries 1 ←→ 0..1 quickref_feedback
 
 ## Volume Estimates
 
-- **documents_sst**: ~450 chunks pour Priorité 1 (OTConst ~300, CFST 6508 ~100, OPA ~50). Extensible à ~2000 chunks pour Priorité 1-3.
+- **documents_sst**: ~4480 chunks pour Priorité 1 + 2 (39 sources : 7 initiales + 6 lois + 11 ordonnances + 14 directives CFST/ESTI + 2 articles de code). 3 directives CFST manquantes (1907, 2135, 2314). Extensible à ~6000+ chunks avec sources Priorité 3.
 - **quickref_queries**: ~1000 lignes/mois (cible), nettoyées à 90 jours → max ~3000 lignes.
 - **quickref_feedback**: ~5-10% des requêtes → ~100-300 lignes actives.

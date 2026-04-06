@@ -17,7 +17,7 @@ SST-QuickRef est un assistant IA juridique spécialisé dans la réglementation 
 **Project Type**: Web service (RAG backend) + SPA (landing page chat) + API REST
 **Performance Goals**: < 3 secondes par requête, 1000 req/mois, 99,5% disponibilité heures ouvrées
 **Constraints**: Français uniquement (Phase 1-2), conformité nLPD/RGPD, anonymisation logs, < CHF 5/mois coûts API à 1000 req/mois
-**Scale/Scope**: ~450 chunks documentaires (Priorité 1), 3 sources réglementaires, extensible à 8+ sources
+**Scale/Scope**: ~4480 chunks documentaires (39 sources réglementaires, Priorité 1 + 2), extensible avec 3 directives CFST manquantes + sources Priorité 3
 
 ## Constitution Check
 
@@ -71,9 +71,13 @@ sst-quickref/
 │
 ├── scripts/
 │   ├── ingest/                  # Scripts d'ingestion des textes réglementaires
+│   │   ├── documents-registry.ts # Registre de tous les documents (39 sources)
 │   │   ├── parse-otconst.ts     # Parser OTConst
 │   │   ├── parse-cfst6508.ts    # Parser CFST 6508
 │   │   ├── parse-opa.ts         # Parser OPA Art. 62
+│   │   ├── parse-olt1-4.ts      # Parser OLT1-4
+│   │   ├── parse-generic.ts     # Parser générique (lois, ordonnances, directives)
+│   │   ├── download-all.ts      # Téléchargement auto via SPARQL fedlex API
 │   │   ├── chunk.ts             # Découpage sémantique
 │   │   ├── embed.ts             # Embedding via text-embedding-3-small
 │   │   └── upload.ts            # Upload vers Supabase

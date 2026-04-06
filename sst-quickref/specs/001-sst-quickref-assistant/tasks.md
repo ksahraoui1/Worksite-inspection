@@ -49,14 +49,18 @@
 
 **Goal**: Un utilisateur pose une question SST en français et reçoit une réponse sourcée avec citations vérifiables en < 3 secondes
 
-**Independent Test**: Poser 10 questions de référence couvrant OTConst, CFST 6508 et OPA, vérifier que chaque réponse cite correctement l'article, la version et l'URL source
+**Independent Test**: Poser 10 questions de référence couvrant les 39 sources (OTConst, CFST 6508, OPA, OLT1-4, lois, ordonnances, directives CFST), vérifier que chaque réponse cite correctement l'article, la version et l'URL source
 
 ### Implementation for User Story 1
 
 - [x] T013 [P] [US1] Create OTConst parser in `scripts/ingest/parse-otconst.ts`: extract articles from OTConst PDF/HTML source, preserve article numbers, version date, source URL
 - [x] T014 [P] [US1] Create CFST 6508 parser in `scripts/ingest/parse-cfst6508.ts`: extract chapters and sections from CFST 6508, preserve metadata
 - [x] T015 [P] [US1] Create OPA parser in `scripts/ingest/parse-opa.ts`: extract Art. 62 and related provisions from OPA, preserve metadata
-- [x] T016 [US1] Create ingestion orchestrator in `scripts/ingest/run-all.ts`: execute all 3 parsers sequentially → chunk.ts → embed.ts → upload.ts, log progress, verify ~450 chunks inserted in documents_sst, report summary (count per source, total tokens, errors)
+- [x] T015b [P] [US1] Create OLT1-4 parser in `scripts/ingest/parse-olt1-4.ts`: extract articles from OLT1, OLT2, OLT3, OLT4
+- [x] T015c [P] [US1] Create generic parser in `scripts/ingest/parse-generic.ts`: parser générique pour les 32 nouvelles sources (lois, ordonnances, directives CFST, ESTI, articles de code)
+- [x] T015d [P] [US1] Create documents registry in `scripts/ingest/documents-registry.ts`: registre centralisé des 39 sources avec métadonnées (nom, URL fedlex, type, statut)
+- [x] T015e [P] [US1] Create download script in `scripts/ingest/download-all.ts`: téléchargement automatique des PDFs via SPARQL fedlex API
+- [x] T016 [US1] Create ingestion orchestrator in `scripts/ingest/run-all.ts`: execute all parsers (specific + generic) → chunk.ts → embed.ts → upload.ts, log progress, verify ~4480 chunks inserted in documents_sst, report summary (count per source, total tokens, errors). 3 directives CFST manquantes : 1907, 2135, 2314
 - [x] T017 [US1] Create Edge Function `supabase/functions/quickref-query/index.ts`: implement full RAG pipeline — receive question, compute embedding via text-embedding-3-small, search pgvector (top-5, cosine similarity), check similarity threshold (0.75, refuse if all below), construct Claude Sonnet prompt with system prompt SST + context chunks, generate response with mandatory source citations, return query_id + formatted response per API contract (success or no-match)
 - [x] T018 [US1] Create system prompt for Claude in `supabase/functions/quickref-query/system-prompt.ts`: instruct Claude to cite [Source] Art. XX — Version JJ.MM.AAAA — [URL], refuse to answer without sources, respond in French, include disclaimer
 - [x] T019 [US1] Create benchmark questions file in `tests/benchmark/questions.json`: 50 reference questions covering OTConst (~25), CFST 6508 (~15), OPA (~10) with expected source/article for each

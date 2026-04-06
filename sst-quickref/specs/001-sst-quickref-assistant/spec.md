@@ -192,7 +192,8 @@ Un inspecteur expérimenté détecte qu'une réponse SST-QuickRef cite un articl
 
 ### Pending
 - Intégration bouton "Texte applicable" dans Securionis Inspect
-- Sources additionnelles : SUVA Fiches-info, SECO Instructions
+- 3 directives CFST manquantes : 1907, 2135, 2314
+- Sources additionnelles Priorité 3 : SUVA Fiches-info, SECO Instructions, SIA 118, nLPD, AEAI
 - Multi-langue (allemand)
 - Benchmark formel sur 50 questions de référence
 - Nginx hardening à redéployer sur le VPS (deploy/nginx.conf mis à jour)

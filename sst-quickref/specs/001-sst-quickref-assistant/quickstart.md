@@ -40,27 +40,26 @@ cd supabase
 npx supabase db push
 ```
 
-### 3. Ingérer les textes réglementaires Priorité 1
+### 3. Télécharger et ingérer les 39 sources réglementaires
 
 ```bash
-# Parser et ingérer OTConst
-npx tsx scripts/ingest/parse-otconst.ts
+# Télécharger tous les PDFs via SPARQL fedlex API
+npx tsx scripts/ingest/download-all.ts
 
-# Parser et ingérer CFST 6508
-npx tsx scripts/ingest/parse-cfst6508.ts
-
-# Parser et ingérer OPA Art. 62
-npx tsx scripts/ingest/parse-opa.ts
+# Ingérer toutes les sources (parsers spécifiques + générique)
+npx tsx scripts/ingest/run-all.ts
 ```
+
+Note : 3 directives CFST (1907, 2135, 2314) ne sont pas encore disponibles et seront ignorées.
 
 ### 4. Valider l'ingestion
 
 ```bash
 # Vérifier le nombre de chunks insérés
-npx supabase db execute "SELECT source, COUNT(*) FROM documents_sst WHERE NOT is_superseded GROUP BY source;"
+npx supabase db execute "SELECT source, COUNT(*) FROM documents_sst WHERE NOT is_superseded GROUP BY source ORDER BY source;"
 ```
 
-Résultat attendu : ~300 OTConst, ~100 CFST_6508, ~50 OPA.
+Résultat attendu : ~4480 chunks répartis sur 39 sources (7 initiales + 32 nouvelles : 6 lois, 11 ordonnances, 14 directives CFST/ESTI, 2 articles de code).
 
 ### 5. Démarrer le frontend
 
@@ -105,5 +104,6 @@ Sortie attendue : taux de citations correctes, temps de réponse moyen, taux de 
 | `npm run build` | Build production du frontend |
 | `npx supabase functions serve` | Edge Functions en local |
 | `npx supabase db push` | Appliquer les migrations |
-| `npx tsx scripts/ingest/parse-otconst.ts` | Ingérer OTConst |
+| `npx tsx scripts/ingest/download-all.ts` | Télécharger tous les PDFs (fedlex SPARQL) |
+| `npx tsx scripts/ingest/run-all.ts` | Ingérer toutes les 39 sources |
 | `npx tsx scripts/validate/run-benchmark.ts` | Benchmark 50 questions |

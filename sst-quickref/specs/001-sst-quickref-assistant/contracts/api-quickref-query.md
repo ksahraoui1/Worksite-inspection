@@ -58,7 +58,7 @@
 | query_id | string (UUID) | Identifiant unique de la requête (pour feedback) |
 | answer | string | Réponse générée avec citations intégrées |
 | sources | array | Liste des sources réglementaires citées |
-| sources[].source | string | Nom de la source (OTConst, CFST_6508, OPA) |
+| sources[].source | string | Nom de la source (ex: OTConst, CFST_6508, OPA, LAA, OLT5, CFST_6501, CO_328, CP_229 — 39 sources au total) |
 | sources[].article | string | Référence de l'article |
 | sources[].version_date | string (ISO date) | Date de la version du texte |
 | sources[].source_url | string | URL officielle du document |
