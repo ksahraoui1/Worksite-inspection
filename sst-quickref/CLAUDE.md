@@ -40,7 +40,7 @@ sst-quickref/
 │   ├── embed.ts                 # OpenAI text-embedding-3-small
 │   ├── upload.ts                # Upload Supabase avec SHA-256
 │   └── run-all.ts               # Orchestrateur complet
-├── data/                        # PDFs réglementaires (otconst, opa, cfst6508, olt1-4)
+├── data/                        # PDFs réglementaires (37 fichiers : lois, ordonnances, directives CFST, ESTI)
 ├── tests/benchmark/             # 50 questions de référence (questions.json)
 ├── scripts/validate/            # run-benchmark.ts
 ├── deploy/                      # nginx.conf + deploy.sh pour VPS
@@ -71,7 +71,8 @@ cd /tmp/sst-quickref/sst-quickref/frontend && npm install && npx vite build && c
 ## Key Architecture
 
 - **RAG Pipeline** : question → embedding (OpenAI) → recherche vectorielle pgvector top-5 → seuil 0.55 → prompt Claude Sonnet avec contexte → réponse sourcée avec citations
-- **7 sources réglementaires** : OTConst (160 chunks), CFST 6508 (44), OPA (207), OLT1 (252), OLT2 (188), OLT3 (48), OLT4 (72)
+- **39 sources réglementaires** (~4480 chunks) : 7 originales (OTConst, CFST 6508, OPA, OLT1-4) + 32 nouvelles (6 lois: LAA/LChim/LRS/LEg/LSPS/LIE, 11 ordonnances: OLT5/OChim/OPB/ORRChim/OICF/OIBT/OPair/OSPS/OMAle/OSEC/OPI, 14 directives CFST + ESTI 407, 2 articles de code: CO 328/CP 229)
+- **Ingestion** : `documents-registry.ts` (registre), `parse-generic.ts` (parser générique), `download-all.ts` (téléchargement SPARQL fedlex)
 - **Rate limiting** : 10 req/jour pour anonymes (IP-based), illimité pour admin (header x-admin-key)
 - **Disclaimer** : Affiché sur chaque réponse, SST-QuickRef n'est pas un avis juridique
 - **Offline** : Cache IndexedDB des 50 dernières réponses
@@ -105,3 +106,4 @@ cd /tmp/sst-quickref/sst-quickref/frontend && npm install && npx vite build && c
 - 2026-04-05 : Abonnement Stripe Plan Pro CHF 29/mois (checkout, webhook, table subscriptions)
 - 2026-04-05 : Authentification magic link via Supabase Auth
 - 2026-04-05 : Session unique par abonné (1 seul appareil simultané, bannière si révoquée)
+- 2026-04-06 : Expansion corpus RAG — 32 nouvelles sources (971 → ~4480 chunks), téléchargement auto via SPARQL fedlex, parser générique

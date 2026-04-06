@@ -18,6 +18,8 @@ import { parseOLT4 } from './parse-olt4'
 import { generateEmbeddings } from './embed'
 import { uploadChunks } from './upload'
 import type { DocumentChunk } from './chunk'
+import { NEW_DOCUMENTS } from './documents-registry'
+import { parseDocument } from './parse-generic'
 
 /** Load .env file if present (no external dependency) */
 function loadEnvFile(): void {
@@ -85,6 +87,7 @@ async function runPipeline(): Promise<PipelineStats> {
   // --- Step 1: Parse all sources ---
   console.log('\n========== Step 1: Parsing documents ==========\n')
 
+  // Parsers existants (7 sources originales)
   const parsers: { name: string; fn: () => Promise<DocumentChunk[]> }[] = [
     { name: 'OTConst', fn: parseOTConst },
     { name: 'CFST_6508', fn: parseCFST6508 },
@@ -94,6 +97,14 @@ async function runPipeline(): Promise<PipelineStats> {
     { name: 'OLT3', fn: parseOLT3 },
     { name: 'OLT4', fn: parseOLT4 },
   ]
+
+  // Ajout des 32 nouveaux documents depuis le registre
+  for (const doc of NEW_DOCUMENTS) {
+    parsers.push({
+      name: doc.source,
+      fn: () => parseDocument(doc),
+    })
+  }
 
   const allChunks: DocumentChunk[] = []
 
