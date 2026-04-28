@@ -1,0 +1,5 @@
+# Ne jamais committer les certificats et clés privées
+*.pem
+*.key
+*.crt
+*.p12
