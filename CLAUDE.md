@@ -35,7 +35,7 @@ securionis-chantiers/
 - **PWA offline** : Service Worker (network-first pages, cache-first assets), IndexedDB local-first autosave, sync auto au retour réseau
 - **Dashboard** : `/dashboard` — KPI personnalisés par inspecteur (RLS), graphique NC, chantiers urgents, liste visites du mois cliquable
 - **Email** : Signature dynamique depuis données entreprise, envoi multi-destinataires en une requête Resend
-- **Checklist visite** : Sélection de points dégroupée (liste plate), ajout de thèmes en cours de visite sans perte des points existants
+- **Checklist visite** : Sélection de points dégroupée (liste plate), ajout de thèmes en cours de visite sans perte des points existants, recherche globale par mot-clé (catégories + thèmes) avec debounce
 - **Données** : 26 catégories, 442 thèmes, 447 points de contrôle (migration 025, source Excel)
 
 ## Security
@@ -81,3 +81,7 @@ TypeScript 5.x: Follow standard conventions
 - 2026-03-27: Audit sécurité complet — RLS renforcée (migrations 022-023), CSP, autorisation API, SSRF whitelist stricte, XSS emails, validation uploads, admin guard, Storage RLS, anti-énumération comptes, bloquer modification rôle, rate limiting, audit logging, prompt injection mitigation
 - 2026-03-28: Modèle freemium (Stripe), aperçu PDF (CSP frame-src), envoi email multi-destinataires, copyright footer
 - 2026-03-29: Import 447 points de contrôle depuis Excel (migrations 025-026), correction chargement catégories (retrait filtre phase_id IS NULL, fix RLS), dashboard visites du mois cliquable, sélection points dégroupée, ajout thèmes sans perte de points existants
+- 2026-04-07: Recherche globale par mot-clé (catégories + thèmes) sur nouvelle visite et ajout en cours de visite, bouton "+ Catégories/Thèmes" déplacé en bas de checklist
+- 2026-04-08: Audit sécurité complet v2 — trigger PostgreSQL anti-modification rôle (migration 027), autorisation écarts/statut + photos/analyze, fix bypass export XLSX, prompt injection mitigation (balises XML), Content-Length limits sur fetch, sender name sanitization, audit logging étendu (email envoi, écart statut), rate limiter anti-memory-exhaustion, validation scope export, upgrade Anthropic SDK
+- 2026-04-15: Remarques générales visite (migration 028, champ textarea + section PDF), suppression visite en cours (API DELETE /api/visites/[id] + DeleteVisiteButton avec confirmation, audit log), bouton « Remarques » (orange) dans checklist (migration 029, valeur 'remarques' dans contrainte CHECK), section Remarques dans PDF (fond ambre/bordure orange), fix type TS valeur reponses
+- 2026-04-28: Déploiement VPS Hostinger (31.97.36.92) — Docker Compose, Nginx reverse proxy, Cloudflare Flexible SSL. Fix NEXT_PUBLIC_APP_URL (https://ton-domaine.com → https://chantiers.securionis.com), rebuild container (résolution erreurs "Failed to find Server Action"), Supabase Auth URL Configuration mise à jour (Site URL + Redirect URLs). Commande de mise à jour : cd /app/securionis && docker compose up --build -d
